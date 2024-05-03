@@ -14,6 +14,14 @@ const hooks = require('./hooks')
     app.delete('/user/:id', { preHandler: [hooks.auth.validateToken] }, controllers.user.deleteUserById);
   };
 
+
+  const paymentRoute = (app) => {
+  app.post('/payment/source', { preHandler: [hooks.auth.validateToken] }, controllers.payment.createPaymentSource);
+  app.post('/payment/charge', { preHandler: [hooks.auth.validateToken] }, controllers.payment.createCharge);
+  app.post('/payment/webhook', controllers.payment.handlePaymentWebhook);
+};
+
 module.exports ={
     userRoute,
+    paymentRoute,
 }
