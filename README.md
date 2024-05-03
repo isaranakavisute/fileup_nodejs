@@ -1,0 +1,2 @@
+- npx prisma migrate dev (migrate data)
+- yarn run dev (start server )
