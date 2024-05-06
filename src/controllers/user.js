@@ -165,55 +165,7 @@ const createUser = async (request, reply) => {
   }
 };
 
-const createPaymentSource = async (request, reply) => {
-  const { amount, currency, type } = request.body; // รับข้อมูลการชำระเงินจาก request
 
-  try {
-    // สร้างแหล่งเงิน
-    const source = await omise.sources.create({
-      amount: amount * 100, // จำนวนเงินในหน่วยเซนต์
-      currency: currency, // สกุลเงิน
-      type: type, // ประเภทของแหล่งเงิน เช่น "paynow"
-    });
-
-    reply.status(201).send({
-      status: 'success',
-      message: 'Payment source created successfully',
-      data: source,
-    });
-  } catch (error) {
-    console.error('Error creating payment source:', error);
-    reply.status(500).send({
-      status: 'error',
-      message: 'Error creating payment source',
-    });
-  }
-};
-
-const createCharge = async (request, reply) => {
-  const { sourceId, amount, currency } = request.body; // รับข้อมูล Charge
-
-  try {
-    // สร้าง Charge
-    const charge = await omise.charges.create({
-      source: sourceId, // ID ของแหล่งเงิน
-      amount: amount * 100, // จำนวนเงินในหน่วยเซนต์
-      currency: currency, // สกุลเงิน
-    });
-
-    reply.status(201).send({
-      status: 'success',
-      message: 'Charge created successfully',
-      data: charge,
-    });
-  } catch (error) {
-    console.error('Error creating charge:', error);
-    reply.status(500).send({
-      status: 'error',
-      message: 'Error creating charge',
-    });
-  }
-};
 
 const deleteUserById = async (request, reply) => {
   const { id } = request.params;
@@ -253,8 +205,6 @@ const generateToken = (user) => {
 };
 
 
-
-``
 
 
 const getMyProfile = async (request, reply) => {
@@ -383,19 +333,6 @@ const getUserById = async (request, reply) => {
   }
 };
 
-const handlePaymentWebhook = (request, reply) => {
-  const event = request.body;
-
-  if (event.object === 'charge' && event.charge.status === 'successful') {
-    console.log('Charge successful:', event.charge);
-    // ทำบางอย่างเมื่อการชำระเงินสำเร็จ เช่น อัปเดตฐานข้อมูล
-  } else {
-    console.error('Charge failed:', event.charge);
-    // จัดการเมื่อการชำระเงินล้มเหลว
-  }
-
-  reply.status(200).send('Webhook received');
-};
 
 const loginUser = async (request, reply) => {
   const { email, password } = request.body;
@@ -633,15 +570,12 @@ module.exports = {
   changePassword,
   changePhoneNumber,
   createUser,
-  createPaymentSource,
-  createCharge,
   deleteUserById,
   getMyProfile,
   getUsers,
   getUserById,
   loginUser,
   logoutUser,
-  handlePaymentWebhook,
   registerUser,
   resetPassword,
   updateUser,

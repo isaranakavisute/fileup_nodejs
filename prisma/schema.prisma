@@ -26,6 +26,64 @@ model DigitalAsset {
   createdAt    DateTime? @default(now())
 }
 
+
+
+model MusicTrack {
+  id           Int       @id @default(autoincrement())
+  title        String // ชื่อเพลง
+  artist       String // ชื่อนักร้อง
+  album        String? // ชื่ออัลบั้ม (ถ้ามี)
+  genre        String // ประเภทเพลง
+  duration     Int // ความยาวเพลง (หน่วยเป็นวินาที)
+  fileUrl      String // พาธไฟล์เพลง
+  fileType     String // ชนิดของไฟล์ เช่น mp3
+  uploadedBy   User      @relation(fields: [uploadedById], references: [id])
+  uploadedById Int // เชื่อมโยงกับ User
+  createdAt    DateTime? @default(now())
+}
+
+model Package {
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float
+  duration    Int // ความยาวของแพ็กเกจ (เช่น 365 วัน)
+  dailyUpload Int? // อัปโหลดต่อวัน 
+  allUpload   Int? // อัปโหลดทั้งหมดต่อแพ็กเกจ
+  createdAt   DateTime? @default(now())
+  updatedAt   DateTime? @updatedAt
+  subscriptions Subscription[] // ความสัมพันธ์กับการสมัครสมาชิก
+}
+
+
+model Subscription {
+  id        Int       @id @default(autoincrement())
+  user      User      @relation(fields: [userId], references: [id])
+  userId    Int       @unique
+  type      String
+  startDate DateTime
+  endDate   DateTime?
+  isActive  Boolean   @default(true)
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+  package   Package   @relation(fields: [packageId], references: [id]) // อ้างอิงแพ็กเกจ
+  packageId Int
+}
+
+model Transaction {
+  id            Int       @id @default(autoincrement())
+  transactionId String    @unique // Transaction ID 
+  amount        Float // จำนวนเงินที่ทำธุรกรรม
+  type          String // ประเภทการทำธุรกรรม เช่น 'deposit', 'withdrawal', 'purchase'
+  description   String?
+  wallet        Wallet    @relation(fields: [walletId], references: [id])
+  walletId      Int
+  balanceBefore Float
+  balanceAfter  Float
+  createdAt     DateTime? @default(now())
+}
+
+
 model User {
   id            Int            @id @default(autoincrement())
   email         String         @unique
@@ -42,45 +100,6 @@ model User {
   digitalAssets DigitalAsset[] // ความสัมพันธ์กับไฟล์ดิจิทัล
   wallet        Wallet?
   dailyUploads  DailyUpload[]
-}
-
-model Subscription {
-  id        Int       @id @default(autoincrement())
-  user      User      @relation(fields: [userId], references: [id])
-  userId    Int       @unique
-  type      String
-  startDate DateTime
-  endDate   DateTime?
-  isActive  Boolean   @default(true)
-  createdAt DateTime? @default(now())
-  updatedAt DateTime? @updatedAt
-}
-
-model Transaction {
-  id            Int       @id @default(autoincrement())
-  transactionId String    @unique // Transaction ID 
-  amount        Float // จำนวนเงินที่ทำธุรกรรม
-  type          String // ประเภทการทำธุรกรรม เช่น 'deposit', 'withdrawal', 'purchase'
-  description   String?
-  wallet        Wallet    @relation(fields: [walletId], references: [id])
-  walletId      Int
-  balanceBefore Float
-  balanceAfter  Float
-  createdAt     DateTime? @default(now())
-}
-
-model MusicTrack {
-  id           Int       @id @default(autoincrement())
-  title        String // ชื่อเพลง
-  artist       String // ชื่อนักร้อง
-  album        String? // ชื่ออัลบั้ม (ถ้ามี)
-  genre        String // ประเภทเพลง
-  duration     Int // ความยาวเพลง (หน่วยเป็นวินาที)
-  fileUrl      String // พาธไฟล์เพลง
-  fileType     String // ชนิดของไฟล์ เช่น mp3
-  uploadedBy   User      @relation(fields: [uploadedById], references: [id])
-  uploadedById Int // เชื่อมโยงกับ User
-  createdAt    DateTime? @default(now())
 }
 
 model Wallet {
