@@ -30,7 +30,7 @@
   },
   "scripts": {
     "dev": "  nodemon index.js SECRET_KEY = musica_gent ",
-    "migrate": "prisma migrate dev ",
+    "migrate": "node prisma migrate dev ",
     "seed": "node prisma/seed.js"
   },
   "devDependencies": {

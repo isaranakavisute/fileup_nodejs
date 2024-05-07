@@ -128,7 +128,6 @@ const changePassword = async (request, reply) => {
 
 
 const createUser = async (request, reply) => {
-  const saltRounds = 10;
   const {
     name,
     password,
@@ -136,10 +135,23 @@ const createUser = async (request, reply) => {
     logsRegister,
   } = request.body;
 
+  if (!validateEmail(email)) { // ตรวจสอบอีเมล
+    return reply.code(400).send({
+      status: 'error',
+      message: 'Invalid email format.',
+    });
+  }
+
+  if (!validatePassword(password)) { // ตรวจสอบรหัสผ่าน
+    return reply.code(400).send({
+      status: 'error',
+      message: 'Password contains invalid characters. Avoid using ";$^*.',
+    });
+  }
+
   try {
-    
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    
+
     const newUser = await prisma.user.create({
       data: {
         name,
@@ -149,18 +161,16 @@ const createUser = async (request, reply) => {
       },
     });
 
-    
     reply.code(201).send({
       status: 'success',
       message: 'User created successfully',
       data: newUser,
     });
   } catch (error) {
-   
     reply.code(500).send({
       status: 'error',
       message: 'Internal Server Error',
-      error: error.message,
+      details: error.message,
     });
   }
 };
@@ -219,28 +229,13 @@ const getMyProfile = async (request, reply) => {
     }
 
     const token = authorization.replace("Bearer ", ""); 
-    console.log(chalk.blue("Token received:"), token); 
+    const decodedToken = validateToken(token); // ถอดรหัสและตรวจสอบโทเค็น
 
-    let decodedToken;
-    try {
-      decodedToken = validateToken(token); // ถอดรหัสและตรวจสอบโทเค็น
-    } catch (error) {
-      console.error(chalk.red("Error validating token:"), error);
-      return reply.code(401).send({
-        status: "error",
-        message: "Unauthorized - Invalid token",
-      });
-    }
+    const userId = parseInt(decodedToken.userId); // ใช้ `userId` ที่ถอดรหัสได้
 
-    console.log(chalk.green("Decoded Token:"), decodedToken); // แสดงรายละเอียดโทเค็น
-
-    const userId = decodedToken.userId; // ใช้ `userId` ที่ถอดรหัสได้เพื่อค้นหาผู้ใช้
-    // หรือใช้ข้อมูลอื่น ๆ จาก `decodedToken`
-    const email = decodedToken.email; // ตัวอย่างการใช้ข้อมูลอื่นจากโทเค็น
-
-    // ค้นหาผู้ใช้จาก `userId` หรือข้อมูลอื่น
+    // ค้นหาผู้ใช้และรวมข้อมูลธนาคาร
     const user = await prisma.user.findUnique({
-      where: { id: parseInt(userId) },
+      where: { id: userId },
       select: {
         id: true,
         email: true,
@@ -248,13 +243,21 @@ const getMyProfile = async (request, reply) => {
         lastname: true,
         mobilephone: true,
         point: true,
+        bankAccount: true, // ส่งกลับเลขบัญชีธนาคาร
         createdAt: true,
         updatedAt: true,
       },
+      include: {
+        bank: {
+          select: {
+            nameTh: true, // ชื่อธนาคารเป็นภาษาไทย
+            nameEn: true, // ชื่อธนาคารเป็นภาษาอังกฤษ
+          },
+        },
+      },
     });
 
-    if (!user) { // เมื่อไม่พบผู้ใช้
-      console.error(chalk.red("User not found for ID:"), userId); 
+    if (!user) {
       return reply.code(404).send({
         status: "error",
         message: "User not found",
@@ -264,14 +267,19 @@ const getMyProfile = async (request, reply) => {
     reply.code(200).send({
       status: "success",
       message: "User retrieved successfully",
-      data: user, // ส่งข้อมูลผู้ใช้กลับไป
+      data: {
+        ...user, // รวมข้อมูลที่ได้จาก select
+        bank: user.bank ? {
+          nameTh: user.bank.nameTh,
+          nameEn: user.bank.nameEn,
+        } : null, // ถ้าผู้ใช้ไม่มีธนาคาร
+      },
     });
   } catch (error) {
-    console.error(chalk.red("Error in getMyProfile:"), error); // บันทึกข้อผิดพลาด
     reply.code(500).send({
       status: "error",
       message: "Internal Server Error",
-      error: error.message,
+      details: error.message,
     });
   }
 };
@@ -343,13 +351,13 @@ const loginUser = async (request, reply) => {
     });
 
     if (!user) {
-      throw new Error('Invalid credentials');
+      throw new Error('Invalid username');
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
     if (!isPasswordCorrect) {
-      throw new Error('Invalid credentials');
+      throw new Error('Invalid password');
     }
 
     const token = generateToken(user);
@@ -363,6 +371,20 @@ const loginUser = async (request, reply) => {
 
 const registerUser = async (request, reply) => {
   const { password, name, lastName, mobilephone, email } = request.body;
+
+  if (!validateEmail(email)) { // ตรวจสอบว่าอีเมลมีรูปแบบถูกต้อง
+    reply.status(400).send({
+      error: 'Invalid email format.',
+    });
+    return;
+  }
+
+  if (!validatePassword(password)) { // ตรวจสอบรหัสผ่าน
+    reply.status(400).send({
+      error: 'Invalid characters in password. Avoid using ";$^*.',
+    });
+    return;
+  }
 
   // ตรวจสอบว่าอีเมลไม่ซ้ำ
   const existingUser = await prisma.user.findUnique({
@@ -393,12 +415,12 @@ const registerUser = async (request, reply) => {
 
     reply.status(201).send({
       message: 'User registered successfully',
-      userId: newUser.userId,
+      userId: newUser.id, // ส่งคืน ID ของผู้ใช้ที่สร้างใหม่
     });
   } catch (error) {
     console.error('Error during user registration:', error.message);
     reply.status(500).send({
-      error: 'An error occurred during registration', 
+      error: 'An error occurred during registration',
     });
   }
 };
@@ -450,6 +472,16 @@ const logoutUser = async (request, reply) => {
     console.error('Error during sign-out:', error.message);
     reply.status(500).send('Error during sign-out');
   }
+};
+
+const validateEmail = (email) => {
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+\.[^\s@]+$/; // ตรวจสอบรูปแบบอีเมล
+  return emailPattern.test(email);
+};
+
+const validatePassword = (password) => {
+  const forbiddenCharacters = /[";^*$]/; // ตรวจสอบอักขระที่ไม่อนุญาต
+  return !forbiddenCharacters.test(password);
 };
 
 
