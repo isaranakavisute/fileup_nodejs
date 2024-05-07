@@ -128,7 +128,6 @@ const changePassword = async (request, reply) => {
 
 
 const createUser = async (request, reply) => {
-  const saltRounds = 10;
   const {
     name,
     password,
@@ -136,10 +135,23 @@ const createUser = async (request, reply) => {
     logsRegister,
   } = request.body;
 
+  if (!validateEmail(email)) { // ตรวจสอบอีเมล
+    return reply.code(400).send({
+      status: 'error',
+      message: 'Invalid email format.',
+    });
+  }
+
+  if (!validatePassword(password)) { // ตรวจสอบรหัสผ่าน
+    return reply.code(400).send({
+      status: 'error',
+      message: 'Password contains invalid characters. Avoid using ";$^*.',
+    });
+  }
+
   try {
-    
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    
+
     const newUser = await prisma.user.create({
       data: {
         name,
@@ -149,18 +161,16 @@ const createUser = async (request, reply) => {
       },
     });
 
-    
     reply.code(201).send({
       status: 'success',
       message: 'User created successfully',
       data: newUser,
     });
   } catch (error) {
-   
     reply.code(500).send({
       status: 'error',
       message: 'Internal Server Error',
-      error: error.message,
+      details: error.message,
     });
   }
 };
@@ -343,13 +353,13 @@ const loginUser = async (request, reply) => {
     });
 
     if (!user) {
-      throw new Error('Invalid credentials');
+      throw new Error('Invalid username');
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
     if (!isPasswordCorrect) {
-      throw new Error('Invalid credentials');
+      throw new Error('Invalid password');
     }
 
     const token = generateToken(user);
@@ -363,6 +373,20 @@ const loginUser = async (request, reply) => {
 
 const registerUser = async (request, reply) => {
   const { password, name, lastName, mobilephone, email } = request.body;
+
+  if (!validateEmail(email)) { // ตรวจสอบว่าอีเมลมีรูปแบบถูกต้อง
+    reply.status(400).send({
+      error: 'Invalid email format.',
+    });
+    return;
+  }
+
+  if (!validatePassword(password)) { // ตรวจสอบรหัสผ่าน
+    reply.status(400).send({
+      error: 'Invalid characters in password. Avoid using ";$^*.',
+    });
+    return;
+  }
 
   // ตรวจสอบว่าอีเมลไม่ซ้ำ
   const existingUser = await prisma.user.findUnique({
@@ -393,12 +417,12 @@ const registerUser = async (request, reply) => {
 
     reply.status(201).send({
       message: 'User registered successfully',
-      userId: newUser.userId,
+      userId: newUser.id, // ส่งคืน ID ของผู้ใช้ที่สร้างใหม่
     });
   } catch (error) {
     console.error('Error during user registration:', error.message);
     reply.status(500).send({
-      error: 'An error occurred during registration', 
+      error: 'An error occurred during registration',
     });
   }
 };
@@ -450,6 +474,16 @@ const logoutUser = async (request, reply) => {
     console.error('Error during sign-out:', error.message);
     reply.status(500).send('Error during sign-out');
   }
+};
+
+const validateEmail = (email) => {
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+\.[^\s@]+$/; // ตรวจสอบรูปแบบอีเมล
+  return emailPattern.test(email);
+};
+
+const validatePassword = (password) => {
+  const forbiddenCharacters = /[";^*$]/; // ตรวจสอบอักขระที่ไม่อนุญาต
+  return !forbiddenCharacters.test(password);
 };
 
 
