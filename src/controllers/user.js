@@ -229,28 +229,13 @@ const getMyProfile = async (request, reply) => {
     }
 
     const token = authorization.replace("Bearer ", ""); 
-    console.log(chalk.blue("Token received:"), token); 
+    const decodedToken = validateToken(token); // ถอดรหัสและตรวจสอบโทเค็น
 
-    let decodedToken;
-    try {
-      decodedToken = validateToken(token); // ถอดรหัสและตรวจสอบโทเค็น
-    } catch (error) {
-      console.error(chalk.red("Error validating token:"), error);
-      return reply.code(401).send({
-        status: "error",
-        message: "Unauthorized - Invalid token",
-      });
-    }
+    const userId = parseInt(decodedToken.userId); // ใช้ `userId` ที่ถอดรหัสได้
 
-    console.log(chalk.green("Decoded Token:"), decodedToken); // แสดงรายละเอียดโทเค็น
-
-    const userId = decodedToken.userId; // ใช้ `userId` ที่ถอดรหัสได้เพื่อค้นหาผู้ใช้
-    // หรือใช้ข้อมูลอื่น ๆ จาก `decodedToken`
-    const email = decodedToken.email; // ตัวอย่างการใช้ข้อมูลอื่นจากโทเค็น
-
-    // ค้นหาผู้ใช้จาก `userId` หรือข้อมูลอื่น
+    // ค้นหาผู้ใช้และรวมข้อมูลธนาคาร
     const user = await prisma.user.findUnique({
-      where: { id: parseInt(userId) },
+      where: { id: userId },
       select: {
         id: true,
         email: true,
@@ -258,13 +243,21 @@ const getMyProfile = async (request, reply) => {
         lastname: true,
         mobilephone: true,
         point: true,
+        bankAccount: true, // ส่งกลับเลขบัญชีธนาคาร
         createdAt: true,
         updatedAt: true,
       },
+      include: {
+        bank: {
+          select: {
+            nameTh: true, // ชื่อธนาคารเป็นภาษาไทย
+            nameEn: true, // ชื่อธนาคารเป็นภาษาอังกฤษ
+          },
+        },
+      },
     });
 
-    if (!user) { // เมื่อไม่พบผู้ใช้
-      console.error(chalk.red("User not found for ID:"), userId); 
+    if (!user) {
       return reply.code(404).send({
         status: "error",
         message: "User not found",
@@ -274,14 +267,19 @@ const getMyProfile = async (request, reply) => {
     reply.code(200).send({
       status: "success",
       message: "User retrieved successfully",
-      data: user, // ส่งข้อมูลผู้ใช้กลับไป
+      data: {
+        ...user, // รวมข้อมูลที่ได้จาก select
+        bank: user.bank ? {
+          nameTh: user.bank.nameTh,
+          nameEn: user.bank.nameEn,
+        } : null, // ถ้าผู้ใช้ไม่มีธนาคาร
+      },
     });
   } catch (error) {
-    console.error(chalk.red("Error in getMyProfile:"), error); // บันทึกข้อผิดพลาด
     reply.code(500).send({
       status: "error",
       message: "Internal Server Error",
-      error: error.message,
+      details: error.message,
     });
   }
 };
