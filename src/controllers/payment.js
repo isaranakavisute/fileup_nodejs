@@ -64,77 +64,77 @@ const createCustomerWithCard = async (request, reply) => {
 
 
 
-  const purchasePackage = async (request, reply) => {
-    const { userId, packageId } = request.body;
+  // const purchasePackage = async (request, reply) => {
+  //   const { userId, packageId } = request.body;
   
-    try {
-      const user = await prisma.user.findUnique({ where: { id: userId } });
+  //   try {
+  //     const user = await prisma.user.findUnique({ where: { id: userId } });
   
-      if (!user || !user.omiseCustomerId) {
-        return reply.status(400).send({ error: 'User does not have an Omise customer ID' });
-      }
+  //     if (!user || !user.omiseCustomerId) {
+  //       return reply.status(400).send({ error: 'User does not have an Omise customer ID' });
+  //     }
   
-      const customerId = user.omiseCustomerId;
+  //     const customerId = user.omiseCustomerId;
   
-      const package = await prisma.package.findUnique({ where: { id: packageId } });
+  //     const package = await prisma.package.findUnique({ where: { id: packageId } });
   
-      if (!package) {
-        return reply.status(404).send({ error: 'Package not found' });
-      }
+  //     if (!package) {
+  //       return reply.status(404).send({ error: 'Package not found' });
+  //     }
   
-      // สร้างการชำระเงิน
-      const charge = await omise.charges.create({
-        amount: package.price * 100,
-        currency: 'THB',
-        customer: customerId,
-      });
+  //     // สร้างการชำระเงิน
+  //     const charge = await omise.charges.create({
+  //       amount: package.price * 100,
+  //       currency: 'THB',
+  //       customer: customerId,
+  //     });
   
-      if (charge.status !== 'successful') {
-        throw new Error('Charge failed');
-      }
+  //     if (charge.status !== 'successful') {
+  //       throw new Error('Charge failed');
+  //     }
   
-      // ตรวจสอบการสมัครสมาชิกที่มีอยู่
-      const existingSubscription = await prisma.subscription.findUnique({ where: { userId } });
+  //     // ตรวจสอบการสมัครสมาชิกที่มีอยู่
+  //     const existingSubscription = await prisma.subscription.findUnique({ where: { userId } });
   
-      let newEndDate;
+  //     let newEndDate;
   
-      if (existingSubscription) {
-        // เพิ่มวันหมดอายุด้วยระยะเวลาของแพ็กเกจใหม่
-        newEndDate = new Date(existingSubscription.endDate);
-        newEndDate.setDate(newEndDate.getDate() + package.duration);
-      } else {
-        // สร้างการสมัครสมาชิกใหม่
-        newEndDate = new Date();
-        newEndDate.setDate(newEndDate.getDate() + package.duration);
+  //     if (existingSubscription) {
+  //       // เพิ่มวันหมดอายุด้วยระยะเวลาของแพ็กเกจใหม่
+  //       newEndDate = new Date(existingSubscription.endDate);
+  //       newEndDate.setDate(newEndDate.getDate() + package.duration);
+  //     } else {
+  //       // สร้างการสมัครสมาชิกใหม่
+  //       newEndDate = new Date();
+  //       newEndDate.setDate(newEndDate.getDate() + package.duration);
   
-        await prisma.subscription.create({
-          data: {
-            userId,
-            packageId,
-            startDate: new Date(),
-            endDate: newEndDate,
-            isActive: true,
-          },
-        });
-      }
+  //       await prisma.subscription.create({
+  //         data: {
+  //           userId,
+  //           packageId,
+  //           startDate: new Date(),
+  //           endDate: newEndDate,
+  //           isActive: true,
+  //         },
+  //       });
+  //     }
   
-      // เพิ่มธุรกรรม
-      await prisma.transaction.create({
-        data: {
-          transactionId: charge.id,
-          amount: package.price,
-          type: 'purchase',
-          description: `Purchase package ${package.name}`,
-          walletId: userId,
-        },
-      });
+  //     // เพิ่มธุรกรรม
+  //     await prisma.transaction.create({
+  //       data: {
+  //         transactionId: charge.id,
+  //         amount: package.price,
+  //         type: 'purchase',
+  //         description: `Purchase package ${package.name}`,
+  //         walletId: userId,
+  //       },
+  //     });
   
-      reply.send({ message: 'Package purchased successfully', charge });
-    } catch (err) {
-      console.error('Error during package purchase:', err);
-      reply.status(500).send({ error: 'Internal Server Error', details: err.message });
-    }
-  };
+  //     reply.send({ message: 'Package purchased successfully', charge });
+  //   } catch (err) {
+  //     console.error('Error during package purchase:', err);
+  //     reply.status(500).send({ error: 'Internal Server Error', details: err.message });
+  //   }
+  // };
   
 
   // ฟังก์ชันสำหรับสมัครสมาชิกแพ็กเกจ
@@ -271,7 +271,8 @@ const subscriptionPackage = async (request, reply) => {
   module.exports = {
     createCustomerWithCard,
     // listAllCustomers,
-    purchasePackage,
+    // purchasePackage,
+    subscriptionPackage,
     // retrieveCustomer,
     // updateCustomer,
   };
