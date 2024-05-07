@@ -86,21 +86,22 @@ model Transaction {
 
 
 model User {
-  id            Int            @id @default(autoincrement())
-  email         String         @unique
-  name          String
-  lastname      String?
-  password      String
-  username      String?
-  point         Int            @default(0)
-  mobilephone   String?
-  createdAt     DateTime?      @default(now())
-  updatedAt     DateTime?      @updatedAt
-  subscription  Subscription?  @relation
-  musicTracks   MusicTrack[]
-  digitalAssets DigitalAsset[] // ความสัมพันธ์กับไฟล์ดิจิทัล
-  wallet        Wallet?
-  dailyUploads  DailyUpload[]
+  id             Int           @id @default(autoincrement())
+  email          String        @unique
+  name           String
+  lastname       String?
+  password       String
+  username       String?
+  point          Int           @default(0)
+  mobilephone    String?
+  omiseCustomerId String?      // ฟิลด์เก็บ Omise Customer ID
+  createdAt      DateTime?     @default(now())
+  updatedAt      DateTime?     @updatedAt
+  subscription   Subscription? @relation
+  musicTracks    MusicTrack[]
+  digitalAssets  DigitalAsset[] 
+  wallet         Wallet?
+  dailyUploads   DailyUpload[]
 }
 
 model Wallet {
