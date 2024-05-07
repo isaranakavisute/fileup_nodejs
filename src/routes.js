@@ -20,7 +20,7 @@ const userRoute = (app) => {
     app.post('/packages/purchase', { preHandler: [hooks.auth.validateToken] }, controllers.payment.purchasePackage); //ซื้อแพ็กเกจ:
     // app.get('/customers', { preHandler: [hooks.auth.validateToken] }, controllers.payment.listAllCustomers); // ดึงรายชื่อลูกค้าทั้งหมด:
     // app.get('/customers/:customerId', { preHandler: [hooks.auth.validateToken] }, controllers.payment.retrieveCustomer); //ดึงข้อมูลลูกค้ารายบุคคล:
-    app.put('/customers/:customerId', { preHandler: [hooks.auth.validateToken] }, controllers.payment.updateCustomer); // อัปเดตข้อมูลลูกค้า:
+    // app.put('/customers/:customerId', { preHandler: [hooks.auth.validateToken] }, controllers.payment.updateCustomer); // อัปเดตข้อมูลลูกค้า:
 };
 
 module.exports ={
