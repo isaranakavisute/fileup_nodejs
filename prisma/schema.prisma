@@ -70,6 +70,7 @@ model Subscription {
   packageId Int
 }
 
+
 model Transaction {
   id            Int       @id @default(autoincrement())
   transactionId String    @unique // Transaction ID 

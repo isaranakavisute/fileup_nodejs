@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "type": "commonjs",
   "dependencies": {
+    "@fastify/autoload": "^5.8.2",
+    "@fastify/cors": "7.0.0",
     "@fastify/static": "5.0.0",
-    "@fastify/swagger": "^8.14.0",
+    "@fastify/swagger": "6.0.0",
     "@fastify/swagger-ui": "^3.0.0",
     "@prisma/client": "^5.8.1",
     "axios": "^1.6.5",
@@ -27,6 +30,7 @@
   },
   "scripts": {
     "dev": "  nodemon index.js SECRET_KEY = musica_gent ",
+    "migrate": "prisma migrate dev ",
     "seed": "node prisma/seed.js"
   },
   "devDependencies": {

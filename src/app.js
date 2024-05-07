@@ -1,7 +1,7 @@
 const fastify = require('fastify');
 const cors = require('fastify-cors');
+const paymentRoute = require('./routes');
 const userRoute = require('./routes');
-const partnerRoute = require('./routes');
 const fastifySwagger = require('fastify-swagger');
 
 const buildApp = (options) => {
@@ -27,6 +27,7 @@ const buildApp = (options) => {
   });
 
   userRoute.userRoute(app); // กำหนดเส้นทางสำหรับผู้ใช้
+  paymentRoute.paymentRoute(app)
 
   return app;
 }
