@@ -16,11 +16,8 @@ const userRoute = (app) => {
 
 
   const paymentRoute = (app) => {
-    app.post('/customers', { preHandler: [hooks.auth.validateToken] }, controllers.payment.createCustomerWithCard); //สร้างลูกค้าพร้อมบัตรเครดิต
-    app.post('/packages/purchase', { preHandler: [hooks.auth.validateToken] }, controllers.payment.subscriptionPackage); //ซื้อแพ็กเกจ:
-    // app.get('/customers', { preHandler: [hooks.auth.validateToken] }, controllers.payment.listAllCustomers); // ดึงรายชื่อลูกค้าทั้งหมด:
-    // app.get('/customers/:customerId', { preHandler: [hooks.auth.validateToken] }, controllers.payment.retrieveCustomer); //ดึงข้อมูลลูกค้ารายบุคคล:
-    // app.put('/customers/:customerId', { preHandler: [hooks.auth.validateToken] }, controllers.payment.updateCustomer); // อัปเดตข้อมูลลูกค้า:
+    app.post('/payment/qr-code',{ preHandler: [hooks.auth.validateToken] },controllers.payment.createQRCodeForPackage);
+    app.post('/payment/webhook',controllers.payment.handleOmiseWebhook);
 };
 
 module.exports ={
