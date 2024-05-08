@@ -14,47 +14,60 @@ const omise = require('omise')({
   });
 
 
+  const createWalletIfNotExist = async (userId) => {
+    // ตรวจสอบว่ามี `Wallet` สำหรับ `userId` หรือไม่
+    let wallet = await prisma.wallet.findUnique({
+      where: { userId },
+    });
+  
+    if (!wallet) {
+      // สร้าง `Wallet` ใหม่ หากไม่พบ
+      wallet = await prisma.wallet.create({
+        data: {
+          userId,
+          balance: 0, // ตั้งค่าเริ่มต้น
+        },
+      });
+  
+      console.log("Created new wallet for user:", wallet);
+    }
+  
+    return wallet; // คืนค่า `Wallet` ที่สร้าง
+  };
+  
   const createQRCodeForPackage = async (request, reply) => {
     const { userId, packageId } = request.body;
   
     try {
-      // ตรวจสอบผู้ใช้และแพ็กเกจ
-      const user = await prisma.user.findUnique({ where: { id: userId } });
-  
-      if (!user) {
-        return reply.status(400).send({ error: 'User not found' });
-      }
-  
       const package = await prisma.package.findUnique({ where: { id: packageId } });
   
-      if (!package) {
-        return reply.status(400).send({ error: 'Package not found' });
-      }
-  
-      // ตรวจสอบว่าผู้ใช้มีแพ็กเกจที่ใช้งานอยู่หรือไม่
-      const existingSubscription = await prisma.subscription.findUnique({ where: { userId } });
-  
-      if (existingSubscription && new Date() < existingSubscription.endDate) {
-        return reply.status(400).send({ error: 'You already have an active package' });
-      }
+      // ตรวจสอบหรือสร้าง `Wallet`
+      const wallet = await createWalletIfNotExist(userId);
   
       const amount = Math.round(package.price * 100); // แปลงจากบาทเป็นสตางค์
       const returnUri = `${process.env.OMISE_RETURN_URI}/payment/success`;
   
-      // สร้างการชำระเงินด้วย QR Code
       const charge = await omise.charges.create({
         amount,
         currency: 'thb',
-        source: {
-          type: 'promptpay', // ใช้ PromptPay สำหรับ QR Code
-        },
+        source: { type: 'promptpay' },
         return_uri: returnUri,
       });
   
       if (charge.status === 'pending') {
-        const qrCodeImage = charge.source.scannable_code.image.download_uri;
+        await prisma.transaction.create({
+          data: {
+            transactionId: charge.id,
+            amount: package.price, // ในหน่วยบาท
+            type: "purchase",
+            walletId: wallet.id, 
+            balanceBefore: wallet.balance, // ควรเป็นยอดเงินเริ่มต้น
+            description: `Payment for package:${package.name}`,
+            status: "PENDING", // กำหนดสถานะเริ่มต้น
+          },
+        });
   
-        // ส่งคืน QR Code ให้ผู้ใช้
+        const qrCodeImage = charge.source.scannable_code.image.download_uri;
         return reply.send({
           message: 'QR Code created successfully',
           qrCodeImage,
@@ -72,64 +85,82 @@ const omise = require('omise')({
   
 
 
-const handleOmiseWebhook = async (request, reply) => {
-  try {
-    const event = request.body;
-    
-    // ตรวจสอบว่ามี Event ID และเป็นเหตุการณ์ใหม่
-    const eventId = event.id;
-    const existingEvent = await prisma.webhookEvent.findUnique({
-      where: { eventId },
-    });
-
-    if (existingEvent) {
-      return reply.status(400).send({ error: 'Event already processed' });
-    }
-
-    // เพิ่มข้อมูล Event ID ลงในฐานข้อมูลเพื่อป้องกันการส่งซ้ำ
-    await prisma.webhookEvent.create({
-      data: { eventId },
-    });
-
-    // ตรวจสอบประเภทของเหตุการณ์
-    if (event.object === 'event' && event.type === 'charge.complete') {
-      const charge = event.data;
-
-      if (charge.status === 'successful') {
-        // ตรวจสอบว่ามี Transaction ID แล้วหรือไม่
-        const existingTransaction = await prisma.transaction.findUnique({
-          where: { transactionId: charge.id },
-        });
-
-        if (existingTransaction) {
-          return reply.send({ message: 'Transaction already exists' });
+  const handleOmiseWebhook = async (request, reply) => {
+    try {
+      const event = request.body;
+      const eventId = event.id;
+  
+      // บันทึก WebhookEvent
+      await prisma.webhookEvent.create({
+        data: {
+          eventId,
+          eventType: event.type,
+          receivedAt: new Date(),
+        },
+      });
+  
+      if (event.object === 'event' && event.type === 'charge.complete') {
+        const charge = event.data;
+  
+        if (charge.status === 'successful') {
+          const transaction = await prisma.transaction.findUnique({
+            where: { transactionId: charge.id },
+          });
+  
+          if (transaction) {
+            // อัปเดตสถานะเป็น "success"
+            await prisma.transaction.update({
+              where: { transactionId: charge.id },
+              data: {
+                status: "SUCCESS", // เปลี่ยนสถานะ
+              },
+            });
+  
+            return reply.send({ message: 'Transaction updated to success' });
+          }
         }
-
-        // สร้าง Transaction ใหม่
-        const newTransaction = await prisma.transaction.create({
-          data: {
-            transactionId: charge.id,
-            amount: charge.amount / 100,
-            type: 'deposit',
-            description: charge.description || 'Omise Payment',
-            walletId: 1,
-          },
-        });
-
-        return reply.send({ message: 'Transaction created', newTransaction });
       }
+  
+      return reply.status(400).send({ error: 'Unhandled event type' });
+  
+    } catch (err) {
+      console.error('Error handling Omise webhook:', err);
+      reply.status(500).send({ error: 'Internal Server Error', details: err.message });
     }
+  };
+  
 
-    return reply.status(400).send({ error: 'Unhandled event type' });
 
-  } catch (err) {
-    console.error('Error handling Omise webhook:', err);
-    reply.status(500).send({ error: 'Internal Server Error', details: err.message });
-  }
-};
 
+// const saveTransaction = async (userId, chargeId, amount, description) => {
+//   try {
+//     // เรียกฟังก์ชันเพื่อสร้าง Wallet หากไม่มี
+//     const wallet = await createWalletIfNotExist(userId);
+
+//     const balanceBefore = wallet.balance; // ยอดเงินก่อนทำธุรกรรม
+
+//     // สร้าง Transaction ใหม่
+//     const newTransaction = await prisma.transaction.create({
+//       data: {
+//         transactionId: chargeId,
+//         amount,
+//         type: "purchase",
+//         description,
+//         walletId: wallet.id, // ใช้ `wallet.id`
+//         balanceBefore,
+//       },
+//     });
+
+//     console.log("Transaction created successfully:", newTransaction);
+
+//   } catch (err) {
+//     console.error("Error creating transaction:", err);
+//     throw err; // ส่งต่อข้อผิดพลาด
+//   }
+// };
   
   module.exports = {
+    createWalletIfNotExist,
     createQRCodeForPackage,
     handleOmiseWebhook,
   };
