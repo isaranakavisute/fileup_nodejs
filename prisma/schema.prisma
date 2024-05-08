@@ -85,6 +85,12 @@ model Subscription {
   packageId Int
 }
 
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
 
 model Transaction {
   id            Int       @id @default(autoincrement())
@@ -94,10 +100,11 @@ model Transaction {
   description   String?
   wallet        Wallet    @relation(fields: [walletId], references: [id])
   walletId      Int
-  balanceBefore Float
-  balanceAfter  Float
+  balanceBefore Float?
+  balanceAfter  Float?
   createdAt     DateTime? @default(now())
   webhookEvent  WebhookEvent[]
+  status        TransactionStatus @default(PENDING) // เพิ่ม `status`
 }
 
 
