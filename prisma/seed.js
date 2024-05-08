@@ -1,6 +1,7 @@
 // prisma/seed.js
 
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcrypt');
 
 const prisma = new PrismaClient();
 
@@ -88,9 +89,72 @@ async function seedBanks() {
   console.log("Banks have been seeded without duplication.");
 }
 
+// ฟังก์ชันสร้างหมายเลขโทรศัพท์มือถือแบบสุ่ม
+const generateRandomMobilePhone = () => {
+  const prefix = '08'; // ใช้เลขเริ่มต้นที่พบบ่อย
+  const randomNumbers = Math.floor(10000000 + Math.random() * 90000000); // 8 ตัวเลขสุ่ม
+  return `${prefix}${randomNumbers}`; // ประกอบเลขสุ่มกับ prefix
+};
+
+// ฟังก์ชันสุ่มนามสกุล
+const randomLastnames = [
+  'Smith',
+  'Johnson',
+  'Brown',
+  'Williams',
+  'Jones',
+  'Garcia',
+  'Miller',
+  'Davis',
+  'Rodriguez',
+  'Martinez',
+];
+
+const generateRandomLastname = () => {
+  const index = Math.floor(Math.random() * randomLastnames.length);
+  return randomLastnames[index]; // เลือกนามสกุลแบบสุ่ม
+};
+
+const seedUsers = async () => {
+  const userCount = 10; // จำนวนผู้ใช้ที่ต้องการสร้าง
+  const password = '123456'; // รหัสผ่านเดียวกันสำหรับผู้ใช้ทุกคน
+  const hashedPassword = await bcrypt.hash(password, 10); // แฮชรหัสผ่าน
+
+  for (let i = 1; i <= userCount; i++) {
+    const email = `test${i}@dmail.com`; // อีเมลของผู้ใช้
+    const username = email; // ใช้อีเมลเป็น username
+    const name = `Test User ${i}`; // ชื่อผู้ใช้
+    const mobilephone = generateRandomMobilePhone(); // หมายเลขโทรศัพท์มือถือสุ่ม
+    const lastname = generateRandomLastname(); // นามสกุลสุ่ม
+
+    // ตรวจสอบว่าผู้ใช้มีอยู่แล้วหรือไม่
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!existingUser) {
+      // สร้างผู้ใช้ใหม่ถ้าไม่ซ้ำ
+      await prisma.user.create({
+        data: {
+          email,
+          username, // ใช้อีเมลเป็น username
+          name,
+          lastname, // นามสกุลสุ่ม
+          password: hashedPassword, // รหัสผ่านที่แฮชแล้ว
+          mobilephone, // หมายเลขโทรศัพท์มือถือสุ่ม
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+    }
+  }
+
+  console.log('Users have been seeded without duplication.');
+};
 async function seed() {
   await seedPackages(); // ตรวจสอบและสร้างแพ็กเกจใหม่ถ้าไม่ซ้ำ
   await seedBanks();   // ตรวจสอบและสร้างธนาคารใหม่ถ้าไม่ซ้ำ
+  await seedUsers();
 }
 
 seed()

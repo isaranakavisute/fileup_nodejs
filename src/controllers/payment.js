@@ -14,265 +14,122 @@ const omise = require('omise')({
   });
 
 
-// ฟังก์ชันสำหรับสร้างลูกค้าบน omise พร้อมบัตรเครดิต
-const createCustomerWithCard = async (request, reply) => {
-  const { email, name, cardNumber, expirationMonth, expirationYear, securityCode } = request.body;
-
-  try {
-    // สร้าง Omise token จากข้อมูลบัตรเครดิต
-    const token = await omise.tokens.create({
-      card: {
-        name,
-        number: cardNumber,
-        expiration_month: expirationMonth,
-        expiration_year: expirationYear,
-        security_code: securityCode,
-      },
-    });
-
-    // สร้างลูกค้าใน Omise
-    const customer = await omise.customers.create({
-      email,
-      description: `Customer: ${name}`,
-      card: token.id,
-    });
-
-    // อัปเดตข้อมูล Omise Customer ID ใน Prisma User
-    const updatedUser = await prisma.user.update({
-      where: { email },
-      data: {
-        omiseCustomerId: customer.id,
-      },
-    });
-
-    reply.send({ customer, updatedUser });
-  } catch (err) {
-    reply.status(500).send({ error: err.message });
-  }
-};
-
+  const createQRCodeForPackage = async (request, reply) => {
+    const { userId, packageId } = request.body;
   
-  // ฟังก์ชันสำหรับดึงรายชื่อลูกค้าทั้งหมด
-  // const listAllCustomers = async (request, reply) => {
-  //   try {
-  //     const customers = await omise.customers.list();
-  //     reply.send({ customers });
-  //   } catch (err) {
-  //     reply.status(500).send({ error: err.message });
-  //   }
-  // };
-
-
-
-  // const purchasePackage = async (request, reply) => {
-  //   const { userId, packageId } = request.body;
+    try {
+      // ตรวจสอบผู้ใช้และแพ็กเกจ
+      const user = await prisma.user.findUnique({ where: { id: userId } });
   
-  //   try {
-  //     const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        return reply.status(400).send({ error: 'User not found' });
+      }
   
-  //     if (!user || !user.omiseCustomerId) {
-  //       return reply.status(400).send({ error: 'User does not have an Omise customer ID' });
-  //     }
+      const package = await prisma.package.findUnique({ where: { id: packageId } });
   
-  //     const customerId = user.omiseCustomerId;
+      if (!package) {
+        return reply.status(400).send({ error: 'Package not found' });
+      }
   
-  //     const package = await prisma.package.findUnique({ where: { id: packageId } });
+      // ตรวจสอบว่าผู้ใช้มีแพ็กเกจที่ใช้งานอยู่หรือไม่
+      const existingSubscription = await prisma.subscription.findUnique({ where: { userId } });
   
-  //     if (!package) {
-  //       return reply.status(404).send({ error: 'Package not found' });
-  //     }
+      if (existingSubscription && new Date() < existingSubscription.endDate) {
+        return reply.status(400).send({ error: 'You already have an active package' });
+      }
   
-  //     // สร้างการชำระเงิน
-  //     const charge = await omise.charges.create({
-  //       amount: package.price * 100,
-  //       currency: 'THB',
-  //       customer: customerId,
-  //     });
+      const amount = Math.round(package.price * 100); // แปลงจากบาทเป็นสตางค์
+      const returnUri = `${process.env.OMISE_RETURN_URI}/payment/success`;
   
-  //     if (charge.status !== 'successful') {
-  //       throw new Error('Charge failed');
-  //     }
+      // สร้างการชำระเงินด้วย QR Code
+      const charge = await omise.charges.create({
+        amount,
+        currency: 'thb',
+        source: {
+          type: 'promptpay', // ใช้ PromptPay สำหรับ QR Code
+        },
+        return_uri: returnUri,
+      });
   
-  //     // ตรวจสอบการสมัครสมาชิกที่มีอยู่
-  //     const existingSubscription = await prisma.subscription.findUnique({ where: { userId } });
+      if (charge.status === 'pending') {
+        const qrCodeImage = charge.source.scannable_code.image.download_uri;
   
-  //     let newEndDate;
+        // ส่งคืน QR Code ให้ผู้ใช้
+        return reply.send({
+          message: 'QR Code created successfully',
+          qrCodeImage,
+          chargeId: charge.id,
+        });
+      }
   
-  //     if (existingSubscription) {
-  //       // เพิ่มวันหมดอายุด้วยระยะเวลาของแพ็กเกจใหม่
-  //       newEndDate = new Date(existingSubscription.endDate);
-  //       newEndDate.setDate(newEndDate.getDate() + package.duration);
-  //     } else {
-  //       // สร้างการสมัครสมาชิกใหม่
-  //       newEndDate = new Date();
-  //       newEndDate.setDate(newEndDate.getDate() + package.duration);
+      return reply.status(400).send({ error: 'Failed to create QR Code payment' });
   
-  //       await prisma.subscription.create({
-  //         data: {
-  //           userId,
-  //           packageId,
-  //           startDate: new Date(),
-  //           endDate: newEndDate,
-  //           isActive: true,
-  //         },
-  //       });
-  //     }
-  
-  //     // เพิ่มธุรกรรม
-  //     await prisma.transaction.create({
-  //       data: {
-  //         transactionId: charge.id,
-  //         amount: package.price,
-  //         type: 'purchase',
-  //         description: `Purchase package ${package.name}`,
-  //         walletId: userId,
-  //       },
-  //     });
-  
-  //     reply.send({ message: 'Package purchased successfully', charge });
-  //   } catch (err) {
-  //     console.error('Error during package purchase:', err);
-  //     reply.status(500).send({ error: 'Internal Server Error', details: err.message });
-  //   }
-  // };
-  
-
-  // ฟังก์ชันสำหรับสมัครสมาชิกแพ็กเกจ
-const subscriptionPackage = async (request, reply) => {
-  const { userId, packageId, cardTokenId } = request.body;
-
-  try {
-    // ดึงข้อมูลผู้ใช้และแพ็กเกจจากฐานข้อมูล
-    const user = await prismaClient.user.findUnique({ where: { id: userId } });
-    const package = await prismaClient.package.findUnique({ where: { id: packageId } });
-
-    if (!user) {
-      return reply.status(400).send({ error: 'User not found' });
+    } catch (err) {
+      console.error('Error creating QR Code for package:', err);
+      reply.status(500).send({ error: 'Internal Server Error', details: err.message });
     }
+  };
+  
+
+
+const handleOmiseWebhook = async (request, reply) => {
+  try {
+    const event = request.body;
     
-    if (!package) {
-      return reply.status(400).send({ error: 'Package not found' });
-    }
-
-    // สร้างลูกค้า Omise หากยังไม่มี
-    let customerId = user.omiseCustomerId;
-
-    if (!customerId) {
-      const token = await omise.tokens.retrieve(cardTokenId);
-
-      const customer = await omise.customers.create({
-        email: user.email,
-        description: `Customer: ${user.name} (id: ${userId})`,
-        card: token.id,
-      });
-
-      customerId = customer.id;
-
-      // อัปเดตข้อมูล Omise Customer ID ในฐานข้อมูลผู้ใช้
-      await prismaClient.user.update({
-        where: { id: userId },
-        data: {
-          omiseCustomerId: customerId,
-        },
-      });
-    }
-
-    // สร้างการชำระเงิน
-    const charge = await omise.charges.create({
-      amount: package.price * 100, // แปลงจากหน่วยบาทเป็นหน่วยสตางค์
-      currency: 'thb',
-      customer: customerId,
+    // ตรวจสอบว่ามี Event ID และเป็นเหตุการณ์ใหม่
+    const eventId = event.id;
+    const existingEvent = await prisma.webhookEvent.findUnique({
+      where: { eventId },
     });
 
-    if (charge.status !== 'successful') {
-      return reply.status(400).send({ error: 'Charge failed', details: charge });
+    if (existingEvent) {
+      return reply.status(400).send({ error: 'Event already processed' });
     }
 
-    // ตรวจสอบหรือสร้างการสมัครสมาชิก
-    const existingSubscription = await prismaClient.subscription.findUnique({ where: { userId } });
-
-    let newEndDate;
-
-    if (existingSubscription) {
-      // ขยายวันหมดอายุจากการสมัครสมาชิกที่มีอยู่
-      newEndDate = new Date(existingSubscription.endDate);
-      newEndDate.setDate(newEndDate.getDate() + package.duration);
-    } else {
-      // สร้างการสมัครสมาชิกใหม่
-      newEndDate = new Date();
-      newEndDate.setDate(newEndDate.getDate() + package.duration);
-
-      await prismaClient.subscription.create({
-        data: {
-          userId,
-          packageId,
-          startDate: new Date(),
-          endDate: newEndDate,
-          isActive: true,
-        },
-      });
-    }
-
-    // สร้างธุรกรรมเพื่อบันทึกการชำระเงิน
-    await prismaClient.transaction.create({
-      data: {
-        transactionId: charge.id,
-        amount: package.price,
-        type: 'subscription',
-        description: `Subscription package ${package.name}`,
-        walletId: userId,
-      },
+    // เพิ่มข้อมูล Event ID ลงในฐานข้อมูลเพื่อป้องกันการส่งซ้ำ
+    await prisma.webhookEvent.create({
+      data: { eventId },
     });
 
-    reply.send({ message: 'Subscription created successfully', charge, newEndDate });
+    // ตรวจสอบประเภทของเหตุการณ์
+    if (event.object === 'event' && event.type === 'charge.complete') {
+      const charge = event.data;
+
+      if (charge.status === 'successful') {
+        // ตรวจสอบว่ามี Transaction ID แล้วหรือไม่
+        const existingTransaction = await prisma.transaction.findUnique({
+          where: { transactionId: charge.id },
+        });
+
+        if (existingTransaction) {
+          return reply.send({ message: 'Transaction already exists' });
+        }
+
+        // สร้าง Transaction ใหม่
+        const newTransaction = await prisma.transaction.create({
+          data: {
+            transactionId: charge.id,
+            amount: charge.amount / 100,
+            type: 'deposit',
+            description: charge.description || 'Omise Payment',
+            walletId: 1,
+          },
+        });
+
+        return reply.send({ message: 'Transaction created', newTransaction });
+      }
+    }
+
+    return reply.status(400).send({ error: 'Unhandled event type' });
 
   } catch (err) {
-    console.error('Error during subscription:', err);
+    console.error('Error handling Omise webhook:', err);
     reply.status(500).send({ error: 'Internal Server Error', details: err.message });
   }
 };
 
   
-  
-
-  
-  
-  // ฟังก์ชันสำหรับดึงข้อมูลลูกค้ารายบุคคล
-  // const retrieveCustomer = async (request, reply) => {
-  //   const { customerId } = request.params;
-  
-  //   try {
-  //     const customer = await omise.customers.retrieve(customerId);
-  //     reply.send({ customer });
-  //   } catch (err) {
-  //     reply.status(500).send({ error: err.message });
-  //   }
-  // };
-  
-  // ฟังก์ชันสำหรับอัปเดตข้อมูลลูกค้า
-  // const updateCustomer = async (request, reply) => {
-  //   const { customerId } = request.params;
-  //   const { email, description } = request.body;
-  
-  //   try {
-  //     const updatedCustomer = await omise.customers.update(customerId, {
-  //       email,
-  //       description,
-  //     });
-  
-  //     reply.send({ updatedCustomer });
-  //   } catch (err) {
-  //     reply.status(500).send({ error: err.message });
-  //   }
-  // };
-
-
-  
   module.exports = {
-    createCustomerWithCard,
-    // listAllCustomers,
-    // purchasePackage,
-    subscriptionPackage,
-    // retrieveCustomer,
-    // updateCustomer,
+    createQRCodeForPackage,
+    handleOmiseWebhook,
   };

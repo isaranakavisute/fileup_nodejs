@@ -97,6 +97,7 @@ model Transaction {
   balanceBefore Float
   balanceAfter  Float
   createdAt     DateTime? @default(now())
+  webhookEvent  WebhookEvent[]
 }
 
 
@@ -133,3 +134,15 @@ model Wallet {
   createdAt    DateTime?     @default(now())
   updatedAt    DateTime?     @updatedAt
 }
+
+model WebhookEvent {
+  id          Int       @id @default(autoincrement())
+  eventId     String    @unique // เก็บ Event ID ที่เอกลักษณ์
+  eventType   String    // ประเภทของเหตุการณ์
+  receivedAt  DateTime  @default(now()) // เวลาที่รับ Webhook
+  status      String    // สถานะการประมวลผล เช่น 'processed', 'pending', 'error'
+  transaction Transaction? @relation(fields: [transactionId], references: [id]) // ความสัมพันธ์กับ Transaction ถ้ามี
+  transactionId Int?    // Transaction ID ถ้ามี
+  errorDetails String?  // รายละเอียดข้อผิดพลาด ถ้ามี
+}
+
