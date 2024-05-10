@@ -403,6 +403,7 @@ const registerUser = async (request, reply) => {
         password: hashedPassword,
         mobilephone,
         email,
+        username: email,
       },
     });
     reply.status(201).send({
