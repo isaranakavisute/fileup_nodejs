@@ -6,6 +6,7 @@ const config = require('../config');
 // const jwtDecode = require("jwt-decode");
 const jwtDecode = require('jwt-decode')
 const chalk = require('chalk')
+const crypto = require('crypto');
 
 
 
@@ -246,15 +247,7 @@ const getMyProfile = async (request, reply) => {
         bankAccount: true, // ส่งกลับเลขบัญชีธนาคาร
         createdAt: true,
         updatedAt: true,
-      },
-      include: {
-        bank: {
-          select: {
-            nameTh: true, // ชื่อธนาคารเป็นภาษาไทย
-            nameEn: true, // ชื่อธนาคารเป็นภาษาอังกฤษ
-          },
-        },
-      },
+      }
     });
 
     if (!user) {
@@ -427,20 +420,49 @@ const registerUser = async (request, reply) => {
 
 
 const resetPassword = async (request, reply) => {
-  const { id } = request.params;
+ 
+  const token = request.headers.authorization?.split(' ')[1]; 
+
+  if (!token) {
+    return reply.code(401).send({
+      status: 'error',
+      message: 'Unauthorized: JWT not provided',
+    });
+  }
 
   try {
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userIdFromToken = decoded.userId;
+  
+    const { id } = request.params;
+    
+    // ตรวจสอบว่า ID ที่จะรีเซ็ตตรงกับ ID ใน JWT
+    if (userIdFromToken !== parseInt(id)) {
+      return reply.code(403).send({
+        status: 'error',
+        message: 'Forbidden: You are not allowed to reset another user\'s password',
+      });
+    }
+
+    // สร้างรหัสผ่านใหม่
+    const newPassword = crypto.randomBytes(8).toString('hex'); // สร้างรหัสผ่านสุ่มขนาด 16 ตัวอักษร
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
     const updatedUser = await prisma.user.update({
       where: { id: parseInt(id) },
       data: {
-        password: null, // Reset password logic, implement a secure password reset mechanism
+        password: hashedPassword,
       },
     });
 
     reply.code(200).send({
       status: 'success',
       message: 'User password reset successfully',
-      data: updatedUser,
+      data: {
+        user: updatedUser,
+        newPassword: newPassword, // ส่งรหัสผ่านใหม่กลับไป
+      },
     });
   } catch (error) {
     reply.code(500).send({
