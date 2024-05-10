@@ -121,6 +121,7 @@ model User {
   createdAt    DateTime? @default(now())
   updatedAt    DateTime? @updatedAt
   bankAccount  String? // ฟิลด์เก็บเลขบัญชีธนาคาร
+  bankAccountName  String? // ฟิลด์เก็บชื่อบัญชีธนาคาร
   bankId       Int?    // ฟิลด์สำหรับอ้างอิงธนาคาร
   bank         Bank?   @relation(fields: [bankId], references: [id]) // ความสัมพันธ์กับธนาคารผ่าน bankId
   subscription Subscription? 
