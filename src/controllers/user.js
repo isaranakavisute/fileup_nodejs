@@ -52,7 +52,7 @@ const changePhoneNumber = async (request, reply) => {
     const updatedUser = await prisma.user.update({
       where: { id: parseInt(id) },
       data: {
-        phonenumber: newPhoneNumber,
+        mobilephone: newPhoneNumber,
       },
     });
 
@@ -72,7 +72,7 @@ const changePhoneNumber = async (request, reply) => {
 
 const changePassword = async (request, reply) => {
   try {
-    
+
     const authorization = request.headers.authorization;
     if (!authorization || !authorization.startsWith("Bearer ")) {
       return reply.code(401).send({
@@ -81,12 +81,12 @@ const changePassword = async (request, reply) => {
       });
     }
 
-   
+
     const token = authorization.replace("Bearer ", "");
     let decodedToken;
 
     try {
-      
+
       decodedToken = jwt.verify(token, process.env.JWT_SECRET);
     } catch (error) {
       return reply.code(401).send({
@@ -95,20 +95,20 @@ const changePassword = async (request, reply) => {
       });
     }
 
-    
+
     const userId = decodedToken.userId;
 
 
     const { newPassword } = request.body;
-    
- 
+
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    
+
     const updatedUser = await prisma.user.update({
-      where: { id: userId }, 
+      where: { id: userId },
       data: {
-        password: hashedPassword, 
+        password: hashedPassword,
       },
     });
 
@@ -229,7 +229,7 @@ const getMyProfile = async (request, reply) => {
       });
     }
 
-    const token = authorization.replace("Bearer ", ""); 
+    const token = authorization.replace("Bearer ", "");
     const decodedToken = validateToken(token); // ถอดรหัสและตรวจสอบโทเค็น
 
     const userId = parseInt(decodedToken.userId); // ใช้ `userId` ที่ถอดรหัสได้
@@ -363,7 +363,7 @@ const loginUser = async (request, reply) => {
 };
 
 const registerUser = async (request, reply) => {
-  const { password, name, lastName, mobilephone, email } = request.body;
+  const { password, name, lastname, mobilephone, email } = request.body;
 
   if (!validateEmail(email)) { // ตรวจสอบว่าอีเมลมีรูปแบบถูกต้อง
     reply.status(400).send({
@@ -399,13 +399,12 @@ const registerUser = async (request, reply) => {
     const newUser = await prisma.user.create({
       data: {
         name,
-        lastName,
+        lastname,
         password: hashedPassword,
         mobilephone,
         email,
       },
     });
-
     reply.status(201).send({
       message: 'User registered successfully',
       userId: newUser.id, // ส่งคืน ID ของผู้ใช้ที่สร้างใหม่
@@ -420,8 +419,8 @@ const registerUser = async (request, reply) => {
 
 
 const resetPassword = async (request, reply) => {
- 
-  const token = request.headers.authorization?.split(' ')[1]; 
+
+  const token = request.headers.authorization?.split(' ')[1];
 
   if (!token) {
     return reply.code(401).send({
@@ -431,12 +430,12 @@ const resetPassword = async (request, reply) => {
   }
 
   try {
-    
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userIdFromToken = decoded.userId;
-  
+
     const { id } = request.params;
-    
+
     // ตรวจสอบว่า ID ที่จะรีเซ็ตตรงกับ ID ใน JWT
     if (userIdFromToken !== parseInt(id)) {
       return reply.code(403).send({
@@ -484,7 +483,7 @@ const logoutUser = async (request, reply) => {
       throw new Error('User not found');
     }
 
-    
+
     await prisma.session.deleteMany({
       where: { userId },
     });
@@ -497,7 +496,7 @@ const logoutUser = async (request, reply) => {
 };
 
 const validateEmail = (email) => {
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+\.[^\s@]+$/; // ตรวจสอบรูปแบบอีเมล
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; // ตรวจสอบรูปแบบอีเมล
   return emailPattern.test(email);
 };
 
@@ -510,25 +509,25 @@ const validatePassword = (password) => {
 const validateToken = (token) => {
   try {
     if (!token || typeof token !== 'string') {
-      throw new Error("Invalid token: Token is not a valid string"); 
+      throw new Error("Invalid token: Token is not a valid string");
     }
 
-    const parts = token.split('.'); 
+    const parts = token.split('.');
     if (parts.length !== 3) {
-      throw new Error("Invalid token: Incorrect JWT structure"); 
+      throw new Error("Invalid token: Incorrect JWT structure");
     }
 
-    const header = JSON.parse(base64UrlDecode(parts[0])); 
-    const payload = JSON.parse(base64UrlDecode(parts[1])); 
+    const header = JSON.parse(base64UrlDecode(parts[0]));
+    const payload = JSON.parse(base64UrlDecode(parts[1]));
 
-    if (Date.now() / 1000 > payload.exp) { 
+    if (Date.now() / 1000 > payload.exp) {
       throw new Error("Token has expired");
     }
 
     // console.log(chalk.blue("Decoded token payload:"), payload); 
     return payload;
   } catch (error) {
-    console.error(chalk.red("Error decoding token:"), error); 
+    console.error(chalk.red("Error decoding token:"), error);
     throw new Error("Invalid token");
   }
 };
@@ -539,22 +538,22 @@ const updateUser = async (request, reply) => {
     const token = request.headers.authorization.split(" ")[1]; // ดึง Token จาก Header
     const decodedToken = jwt.verify(token, process.env.JWT_SECRET); // ตรวจสอบ Token
     const userId = decodedToken.userId; // ดึง `userId` จาก Token
-    
+
     // console.log("User ID from Token:", userId);
 
     const { name, lastname, mobilephone } = request.body;
-    
+
     // console.log(chalk.red(request.body));
-    console.log(chalk.red(JSON.stringify(request.body, null, 2))); 
+    console.log(chalk.red(JSON.stringify(request.body, null, 2)));
     const updatedUser = await prisma.user.update({
-      where: { id: userId }, 
+      where: { id: userId },
       data: {
         name,
         lastname,
         mobilephone,
       },
     });
-    
+
 
     reply.code(200).send({
       status: "success",
