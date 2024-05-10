@@ -16,7 +16,7 @@ const userRoute = (app) => {
 
 
   const paymentRoute = (app) => {
-    app.post('/payment/qr-code',controllers.payment.createQRCodeForPackage);
+    app.post('/payment/qr-code',{ preHandler: [hooks.auth.validateToken] },controllers.payment.createQRCodeForPackage);
     app.post('/payment/webhook',controllers.payment.handleOmiseWebhook);
 };
 
