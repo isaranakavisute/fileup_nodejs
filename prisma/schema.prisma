@@ -144,3 +144,8 @@ model WebhookEvent {
   transactionId Int? // Transaction ID ถ้ามี
   errorDetails  String? // รายละเอียดข้อผิดพลาด ถ้ามี
 }
+
+model Session {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+}

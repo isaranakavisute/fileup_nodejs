@@ -117,7 +117,7 @@ const generateRandomLastname = () => {
 
 const seedUsers = async () => {
   const userCount = 10; // จำนวนผู้ใช้ที่ต้องการสร้าง
-  const password = '123456'; // รหัสผ่านเดียวกันสำหรับผู้ใช้ทุกคน
+  const password = '12345678'; // รหัสผ่านเดียวกันสำหรับผู้ใช้ทุกคน
   const hashedPassword = await bcrypt.hash(password, 10); // แฮชรหัสผ่าน
 
   for (let i = 1; i <= userCount; i++) {

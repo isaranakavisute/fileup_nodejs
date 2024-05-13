@@ -5,9 +5,9 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const validateToken = async (request, reply) => {
-  // console.log("----------------------Request received----------------------:", request.headers); // บันทึกข้อมูล request ทั้งหมด
-  // console.log("======================Request body:   ======================", request.body);
-  // console.log(process.env.JWT_SECRET)
+    console.log("----------------------Request received----------------------:", request.headers); // บันทึกข้อมูล request ทั้งหมด
+    console.log("======================Request body:   ======================", request.body);
+    console.log(process.env.JWT_SECRET)
     try {
         const { authorization } = request.headers;
 
