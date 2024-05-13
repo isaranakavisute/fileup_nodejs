@@ -183,7 +183,7 @@ const resetPasswordByEmail = async (request, reply) => {
 
     const hashedPassword = await bcrypt.hash(newpassword, 10);
 
-    //ตรวจสอบว่า token ที่ส่งมาตรงกับ token ใน database หรือไม้
+    //ตรวจสอบว่า token ที่ส่งมาตรงกับ token ใน database หรือไม่
     await prisma.user.updateMany({
       where: { keyResetPassword: keyResetPassword },
       data: {
