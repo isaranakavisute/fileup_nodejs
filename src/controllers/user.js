@@ -7,6 +7,10 @@ const config = require('../config');
 const jwtDecode = require('jwt-decode')
 const chalk = require('chalk')
 const crypto = require('crypto');
+const randomstring = require("randomstring");
+const nodemailer = require("nodemailer");
+const forget = require('../config/forget')
+const Mailgen = require("mailgen");
 
 
 
@@ -126,6 +130,80 @@ const changePassword = async (request, reply) => {
     });
   }
 };
+
+const forgetVerify = async (request, reply) => {
+
+  const { email } = request.body;
+  try {
+    // ตรวจสอบ email ของผู้ใช้มีอยู่ในระบบหรือไม่
+    const checkEmail = await prisma.user.findUnique({
+      where: { email: email },
+      select: {
+        name: true,
+        lastname: true,
+      }
+    });
+
+    // ถ้าไม่มีให้แสดง error
+    if (!checkEmail) {
+      reply.status(404).send({ status: 'error', message: 'Email not found' });
+      return;
+    }
+
+    // const randomString = randomstring.generate();
+    const recoveryCode = crypto.randomBytes(16).toString('hex');
+    const fullname = checkEmail.name + " " + checkEmail.lastname
+    await prisma.user.update({
+      where: { email: email },
+      data: {
+        token: recoveryCode,
+      },
+    })
+    forgetPassword(fullname, email, recoveryCode, reply); // function ส่งแจ้งเตือนไปยัง email
+  } catch (error) {
+    console.error('Error Forget Password:', error);
+    reply.status(500).send({ status: 'error', message: 'Internal Server Error' });
+  }
+}
+
+// รีเซ็ตรหัสผ่านจากลิงค์ที่ส่งไปให้ทาง email
+const resetPasswordByEmail = async (request, reply) => {
+
+  const { token } = request.params
+  const { newpassword, confirmnewpassword } = request.body;
+
+  if (!validatePassword(newpassword, confirmnewpassword)) { // ตรวจสอบรหัสผ่าน
+    reply.status(400).send({
+      error: 'Invalid characters in password. Avoid using ";$^*.',
+    });
+    return;
+  }
+
+  try {
+
+    const hashedPassword = await bcrypt.hash(newpassword, 10);
+
+    //ตรวจสอบว่า token ที่ส่งมาตรงกับ token ใน database หรือไม้
+    await prisma.user.updateMany({
+      where: { token: token },
+      data: {
+        password: hashedPassword,
+        token: null,
+      },
+    });
+
+    reply.code(200).send({
+      status: 'success',
+      message: 'update password successfully',
+    });
+  } catch (error) {
+    reply.code(500).send({
+      status: 'error',
+      message: 'Internal Server Error',
+      details: error.message,
+    });
+  }
+}
 
 
 const createUser = async (request, reply) => {
@@ -579,6 +657,55 @@ const updateUser = async (request, reply) => {
   }
 };
 
+// เปลี่ยนรหัสผ่านทางลิงค์ที่ส่งไปทางอีเมล
+const forgetPassword = async (fullname, email, token, reply) => {
+  let config = {
+    service: "gmail",
+    auth: {
+      user: forget.EMAIL,
+      pass: forget.PASSWORD,
+    },
+  };
+  let MailGenerator = new Mailgen({
+    theme: "default",
+    product: {
+      name: "Music Agent",
+      link: "https://mailgen.js/",
+    },
+  });
+  let response = {
+    body: {
+      name: " " + fullname,
+      intro:
+        '<p>Please click here to <a href="http://localhost:3000/forgetpassword/' +
+        token +
+        '"> Reset </a> your password.</a></p>',
+    },
+  };
+
+  let transporter = nodemailer.createTransport(config);
+
+  let mail = MailGenerator.generate(response);
+
+  let message = {
+    from: forget.EMAIL,
+    to: email,
+    subject: "Reset Password!!!",
+    html: mail,
+  };
+
+  transporter
+    .sendMail(message)
+    .then(() => {
+      reply.status(200).send({
+        msg: "you should receive an email",
+      });
+    })
+    .catch((error) => {
+      reply.status(400).send({ error });
+    });
+};
+
 const uploadFile = async (request, reply) => {
   const { userId, fileData } = request.body;
 
@@ -633,6 +760,8 @@ module.exports = {
   registerUser,
   resetPassword,
   updateUser,
-  uploadFile
+  uploadFile,
+  forgetVerify,
+  resetPasswordByEmail
 
 };
