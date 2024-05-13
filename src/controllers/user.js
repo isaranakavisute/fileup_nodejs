@@ -169,7 +169,7 @@ const forgetVerify = async (request, reply) => {
 // รีเซ็ตรหัสผ่านจากลิงค์ที่ส่งไปให้ทาง email
 const resetPasswordByEmail = async (request, reply) => {
 
-  const { token } = request.params
+  const { keyResetPassword } = request.params
   const { newpassword, confirmnewpassword } = request.body;
 
   if (!validatePassword(newpassword, confirmnewpassword)) { // ตรวจสอบรหัสผ่าน
@@ -185,10 +185,10 @@ const resetPasswordByEmail = async (request, reply) => {
 
     //ตรวจสอบว่า token ที่ส่งมาตรงกับ token ใน database หรือไม้
     await prisma.user.updateMany({
-      where: { token: token },
+      where: { keyResetPassword: keyResetPassword },
       data: {
         password: hashedPassword,
-        token: null,
+        keyResetPassword: null,
       },
     });
 
@@ -658,7 +658,7 @@ const updateUser = async (request, reply) => {
 };
 
 // เปลี่ยนรหัสผ่านทางลิงค์ที่ส่งไปทางอีเมล
-const forgetPassword = async (fullname, email, token, reply) => {
+const forgetPassword = async (fullname, email, keyResetPassword, reply) => {
   let config = {
     service: "gmail",
     auth: {
@@ -678,7 +678,7 @@ const forgetPassword = async (fullname, email, token, reply) => {
       name: " " + fullname,
       intro:
         '<p>Please click here to <a href="http://localhost:3000/forgetpassword/' +
-        token +
+        keyResetPassword +
         '"> Reset </a> your password.</a></p>',
     },
   };

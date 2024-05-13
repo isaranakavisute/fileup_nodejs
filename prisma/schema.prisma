@@ -101,35 +101,35 @@ model Transaction {
 }
 
 model User {
-  id              Int            @id @default(autoincrement())
-  email           String         @unique
-  name            String
-  lastname        String?
-  password        String
-  username        String?
-  point           Int            @default(0)
-  mobilephone     String?
-  omiseCustomerId String?
-  token           String?
-  createdAt       DateTime?      @default(now())
-  updatedAt       DateTime?      @updatedAt
-  bankAccount     String? // ฟิลด์เก็บเลขบัญชีธนาคาร
-  bankAccountName String? // ฟิลด์เก็บชื่อบัญชีธนาคาร
-  bankId          Int? // ฟิลด์สำหรับอ้างอิงธนาคาร
-  bank            Bank?          @relation(fields: [bankId], references: [id]) // ความสัมพันธ์กับธนาคารผ่าน bankId
-  subscription    Subscription?
-  musicTracks     MusicTrack[]
-  digitalAssets   DigitalAsset[]
-  wallet          Wallet?
-  dailyUploads    DailyUpload[]
+  id               Int            @id @default(autoincrement())
+  email            String         @unique
+  name             String
+  lastname         String?
+  password         String
+  username         String?
+  point            Int            @default(0)
+  mobilephone      String?
+  omiseCustomerId  String?
+  keyResetPassword String?
+  createdAt        DateTime?      @default(now())
+  updatedAt        DateTime?      @updatedAt
+  bankAccount      String? // ฟิลด์เก็บเลขบัญชีธนาคาร
+  bankAccountName  String? // ฟิลด์เก็บชื่อบัญชีธนาคาร
+  bankId           Int? // ฟิลด์สำหรับอ้างอิงธนาคาร
+  bank             Bank?          @relation(fields: [bankId], references: [id]) // ความสัมพันธ์กับธนาคารผ่าน bankId
+  subscription     Subscription?
+  musicTracks      MusicTrack[]
+  digitalAssets    DigitalAsset[]
+  wallet           Wallet?
+  dailyUploads     DailyUpload[]
 }
 
 model Wallet {
   id           Int           @id @default(autoincrement())
   balance      Float // ยอดเงินในกระเป๋าเงิน
   user         User          @relation(fields: [userId], references: [id]) // เชื่อมโยงกับ User
-  userId       Int           @unique // ใช้เพื่อระบุเจ้าของกระเป๋าเงิน.
-  transactions Transaction[] // บันทึกการทำธุรกรรม.
+  userId       Int           @unique // ใช้เพื่อระบุเจ้าของกระเป๋าเงิน
+  transactions Transaction[] // บันทึกการทำธุรกรรม
   createdAt    DateTime?     @default(now())
   updatedAt    DateTime?     @updatedAt
 }
