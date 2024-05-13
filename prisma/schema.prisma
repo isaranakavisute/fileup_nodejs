@@ -8,18 +8,16 @@ datasource db {
 }
 
 model Bank {
-  id        Int    @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   nameTh    String?
   nameEn    String?
-  shortName String? @unique
+  shortName String?  @unique
   logo      String?
-  status    Boolean @default(true)
+  status    Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  users     User[] 
+  users     User[]
 }
-
-
 
 model DailyUpload {
   id      Int      @id @default(autoincrement())
@@ -40,8 +38,6 @@ model DigitalAsset {
   createdAt    DateTime? @default(now())
 }
 
-
-
 model MusicTrack {
   id           Int       @id @default(autoincrement())
   title        String // ชื่อเพลง
@@ -57,19 +53,17 @@ model MusicTrack {
 }
 
 model Package {
-  id          Int       @id @default(autoincrement()) 
-  name        String    @unique // กำหนดให้ฟิลด์ 'name' เป็นเอกลักษณ์
-  description String?
-  price       Float
-  duration    Int
-  dailyUpload Int?
-  allUpload   Int?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id            Int            @id @default(autoincrement())
+  name          String         @unique // กำหนดให้ฟิลด์ 'name' เป็นเอกลักษณ์
+  description   String?
+  price         Float
+  duration      Int
+  dailyUpload   Int?
+  allUpload     Int?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   subscriptions Subscription[] // ความสัมพันธ์กับ Subscription
 }
-
-
 
 model Subscription {
   id        Int       @id @default(autoincrement())
@@ -91,47 +85,44 @@ enum TransactionStatus {
   FAILED
 }
 
-
 model Transaction {
-  id            Int       @id @default(autoincrement())
-  transactionId String    @unique // Transaction ID 
+  id            Int               @id @default(autoincrement())
+  transactionId String            @unique // Transaction ID 
   amount        Float // จำนวนเงินที่ทำธุรกรรม
   type          String // ประเภทการทำธุรกรรม เช่น 'deposit', 'withdrawal', 'purchase'
   description   String?
-  wallet        Wallet    @relation(fields: [walletId], references: [id])
+  wallet        Wallet            @relation(fields: [walletId], references: [id])
   walletId      Int
   balanceBefore Float?
   balanceAfter  Float?
-  createdAt     DateTime? @default(now())
+  createdAt     DateTime?         @default(now())
   webhookEvent  WebhookEvent[]
   status        TransactionStatus @default(PENDING) // เพิ่ม `status`
 }
 
-
 model User {
-  id           Int    @id @default(autoincrement()) 
-  email        String @unique
-  name         String
-  lastname     String?
-  password     String
-  username     String?
-  point        Int    @default(0)
-  mobilephone  String?
-  omiseCustomerId String?
-  createdAt    DateTime? @default(now())
-  updatedAt    DateTime? @updatedAt
-  bankAccount  String? // ฟิลด์เก็บเลขบัญชีธนาคาร
+  id               Int            @id @default(autoincrement())
+  email            String         @unique
+  name             String
+  lastname         String?
+  password         String
+  username         String?
+  point            Int            @default(0)
+  mobilephone      String?
+  omiseCustomerId  String?
+  keyResetPassword String?
+  createdAt        DateTime?      @default(now())
+  updatedAt        DateTime?      @updatedAt
+  bankAccount      String? // ฟิลด์เก็บเลขบัญชีธนาคาร
   bankAccountName  String? // ฟิลด์เก็บชื่อบัญชีธนาคาร
-  bankId       Int?    // ฟิลด์สำหรับอ้างอิงธนาคาร
-  bank         Bank?   @relation(fields: [bankId], references: [id]) // ความสัมพันธ์กับธนาคารผ่าน bankId
-  subscription Subscription? 
-  musicTracks  MusicTrack[]
-  digitalAssets DigitalAsset[]
-  wallet       Wallet?
-  dailyUploads DailyUpload[]
+  bankId           Int? // ฟิลด์สำหรับอ้างอิงธนาคาร
+  bank             Bank?          @relation(fields: [bankId], references: [id]) // ความสัมพันธ์กับธนาคารผ่าน bankId.
+  subscription     Subscription?
+  musicTracks      MusicTrack[]
+  digitalAssets    DigitalAsset[]
+  wallet           Wallet?
+  dailyUploads     DailyUpload[]
 }
-
-
 
 model Wallet {
   id           Int           @id @default(autoincrement())
@@ -144,13 +135,12 @@ model Wallet {
 }
 
 model WebhookEvent {
-  id          Int       @id @default(autoincrement())
-  eventId     String    @unique // เก็บ Event ID ที่เอกลักษณ์
-  eventType   String    // ประเภทของเหตุการณ์
-  receivedAt  DateTime  @default(now()) // เวลาที่รับ Webhook
-  status      String    // สถานะการประมวลผล เช่น 'processed', 'pending', 'error'
-  transaction Transaction? @relation(fields: [transactionId], references: [id]) // ความสัมพันธ์กับ Transaction ถ้ามี
-  transactionId Int?    // Transaction ID ถ้ามี
-  errorDetails String?  // รายละเอียดข้อผิดพลาด ถ้ามี
+  id            Int          @id @default(autoincrement())
+  eventId       String       @unique // เก็บ Event ID ที่เอกลักษณ์
+  eventType     String // ประเภทของเหตุการณ์
+  receivedAt    DateTime     @default(now()) // เวลาที่รับ Webhook
+  status        String // สถานะการประมวลผล เช่น 'processed', 'pending', 'error'
+  transaction   Transaction? @relation(fields: [transactionId], references: [id]) // ความสัมพันธ์กับ Transaction ถ้ามี
+  transactionId Int? // Transaction ID ถ้ามี
+  errorDetails  String? // รายละเอียดข้อผิดพลาด ถ้ามี
 }
-
