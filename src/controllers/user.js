@@ -735,7 +735,7 @@ const uploadFile = async (request, reply) => {
     },
     create: {
       userId,
-      uploads: 1, // ถ้ายังไม่มี, สร้างและตั้งเป็น 1
+      uploads: 1, // ถ้ายังไม่มี, สร้างและตั้งเป็น 1.
     },
   });
 
