@@ -128,7 +128,7 @@ model Wallet {
   id           Int           @id @default(autoincrement())
   balance      Float // ยอดเงินในกระเป๋าเงิน
   user         User          @relation(fields: [userId], references: [id]) // เชื่อมโยงกับ User
-  userId       Int           @unique // ใช้เพื่อระบุเจ้าของกระเป๋าเงิน
+  userId       Int           @unique // ใช้เพื่อระบุเจ้าของกระเป๋าเงิน.
   transactions Transaction[] // บันทึกการทำธุรกรรม.
   createdAt    DateTime?     @default(now())
   updatedAt    DateTime?     @updatedAt

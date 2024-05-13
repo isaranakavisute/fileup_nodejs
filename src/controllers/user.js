@@ -731,7 +731,7 @@ const uploadFile = async (request, reply) => {
   await prisma.dailyUpload.upsert({
     where: { userId },
     update: {
-      uploads: { increment: 1 }, // เพิ่มจำนวนครั้งที่อัปโหลด
+      uploads: { increment: 1 }, // เพิ่มจำนวนครั้งที่อัปโหลด.
     },
     create: {
       userId,

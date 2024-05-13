@@ -12,7 +12,7 @@ const userRoute = (app) => {
   app.post('/users/forget-password', controllers.user.forgetVerify); //ลืมรหัสผ่าน
   app.post('/users/forgetpassword/:token', controllers.user.resetPasswordByEmail); //เปลี่ยนรหัสผ่านลิงค์ที่ส่งไปยัง Email.
   app.post('/users/login', controllers.user.loginUser); // เข้าสู่ระบบ
-  app.post('/users/logout', { preHandler: [hooks.auth.validateToken] }, controllers.user.logoutUser); // ออกจากระบบ
+  app.post('/users/logout', { preHandler: [hooks.auth.validateToken] }, controllers.user.logoutUser); // ออกจากระบบ.
   app.delete('/users/:id', { preHandler: [hooks.auth.validateToken] }, controllers.user.deleteUserById); // ลบผู้ใช้ตาม ID
 };
 
