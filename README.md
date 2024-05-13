@@ -18,9 +18,11 @@ https://www.apachefriends.org/download.html
 ![alt text](README.Resource/image.png)
 
 ## Setup Environment
-4. คลิ๊กไปที่ Admin เพื่อเข้าสู่ phpMyAdmin web interface ![alt text](README.Resource/image-1.png)
+4. คลิ๊กไปที่ Admin เพื่อเข้าสู่ phpMyAdmin web interface
+![alt text](README.Resource/image-1.png)
 
-5. หลังจากนั้นให้สร้าง Database ใหม่ชื่อ vvault ดังภาพต่อไปนี้ โดยกดที่ลูกศร +New ![alt text](README.Resource/image-2.png)
+5. หลังจากนั้นให้สร้าง Database ใหม่ชื่อ vvault ดังภาพต่อไปนี้ โดยกดที่ลูกศร +New   
+![alt text](README.Resource/image-2.png)
 
 6. สร้างไฟล์ .env และนำโค้ดวางลงด้านล่างไปวางใน ไฟล์ .env และ setup DATABASE_URL ให้ตรงกับ MySQL ที่สร้าง หากไม่ต้องการตั้ง username หรือ password ให้ใช้ script ดังต่อไปนี้ หากต้องการตั้ง username และ password อ่านข้อถัดไป
 ```bash
