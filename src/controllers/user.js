@@ -414,8 +414,10 @@ const getUserById = async (request, reply) => {
 
 
 const loginUser = async (request, reply) => {
-  const { email, password } = request.body;
-
+  const email = request.body.username;
+  const password = request.body.password;
+  
+  console.error(request);
   try {
     const user = await prisma.user.findUnique({
       where: { email },
