@@ -358,6 +358,7 @@ const getMyProfile = async (request, reply) => {
 const getUserIdFromToken = (token) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('here');
     return decoded.userId;
   } catch (error) {
     console.error('Error decoding token:', error.message);
@@ -443,32 +444,40 @@ const loginUser = async (request, reply) => {
 };
 
 const registerUser = async (request, reply) => {
-  const { password, name, lastname, mobilephone, email } = request.body;
+  const name = request.body.firstName;
+  const lastname = request.body.lastName;
+  const email = request.body.username;
+  const password = request.body.password;
+  const isDevInstance = true;
 
+  if (!isDevInstance) {
   if (!validateEmail(email)) { // ตรวจสอบว่าอีเมลมีรูปแบบถูกต้อง
-    reply.status(400).send({
-      error: 'Invalid email format.',
-    });
-    return;
-  }
+      reply.status(400).send({
+        error: 'Invalid email format.',
+      });
+      console.log('email failed');
+      return;
+    }
 
-  if (!validatePassword(password)) { // ตรวจสอบรหัสผ่าน
-    reply.status(400).send({
-      error: 'Invalid characters in password. Avoid using ";$^*.',
-    });
-    return;
-  }
+    if (!validatePassword(password)) { // ตรวจสอบรหัสผ่าน
+      reply.status(400).send({
+        error: 'Invalid characters in password. Avoid using ";$^*.',
+      });
+      console.log('password failed');
+      return;
+    }
 
-  // ตรวจสอบว่าอีเมลไม่ซ้ำ
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
-  });
-
-  if (existingUser) {
-    reply.status(409).send({
-      error: 'Email already exists', // ข้อความเมื่ออีเมลซ้ำ
+    //ตรวจสอบว่าอีเมลไม่ซ้ำ
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
     });
-    return;
+
+    if (existingUser) {
+      reply.status(409).send({
+        error: 'Email already exists', // ข้อความเมื่ออีเมลซ้ำ
+      });
+      return;
+    }
   }
 
   // เข้ารหัสรหัสผ่าน
@@ -481,7 +490,6 @@ const registerUser = async (request, reply) => {
         name,
         lastname,
         password: hashedPassword,
-        mobilephone,
         email,
         username: email,
       },
@@ -557,13 +565,27 @@ const resetPassword = async (request, reply) => {
 
 const logoutUser = async (request, reply) => {
   try {
-    // รหัสผู้ใช้จากโทเค็น (วิธีการนี้ขึ้นอยู่กับว่าคุณเก็บข้อมูลโทเค็นอย่างไร)
-    const userId = getUserIdFromToken(request.headers.authorization);
 
+    const { authorization } = request.headers;
+    if (!authorization || !authorization.startsWith("Bearer ")) {
+      return reply.code(401).send({
+        status: "error",
+        message: "Unauthorized - Token required",
+      });
+    }
+
+    const token = authorization.replace("Bearer ", "");
+    const decodedToken = validateToken(token); // ถอดรหัสและตรวจสอบโทเค็น
+
+    const userId = parseInt(decodedToken.userId);
+
+    // รหัสผู้ใช้จากโทเค็น (วิธีการนี้ขึ้นอยู่กับว่าคุณเก็บข้อมูลโทเค็นอย่างไร)
+    console.log("---------------" + userId + "------------------");
     if (!userId) {
       throw new Error('User not found');
     }
-
+    // console.log(prisma); // Check if prisma object is defined
+    // console.log(prisma.session); // Check if session model is defined
 
     await prisma.session.deleteMany({
       where: { userId },
