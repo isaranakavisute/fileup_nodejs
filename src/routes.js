@@ -20,6 +20,8 @@ const userRoute = (app) => {
 
 
 const paymentRoute = (app) => {
+  app.get('/payments', { preHandler: [hooks.auth.validateToken] }, controllers.payment.getPayments); //ดึงข้อมูล package ทั้งหมด
+  app.get('/payments/:id', { preHandler: [hooks.auth.validateToken] }, controllers.payment.getPaymentById); //ดึงข้อมูล package ตามไอดี
   app.post('/payment/qr-code', { preHandler: [hooks.auth.validateToken] }, controllers.payment.createQRCodeForPackage);
   app.post('/payment/webhook', controllers.payment.handleOmiseWebhook);
 };
