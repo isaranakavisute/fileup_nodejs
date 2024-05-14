@@ -312,6 +312,7 @@ const getMyProfile = async (request, reply) => {
 
     const userId = parseInt(decodedToken.userId); // ใช้ `userId` ที่ถอดรหัสได้
 
+
     // ค้นหาผู้ใช้และรวมข้อมูลธนาคาร
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -323,6 +324,7 @@ const getMyProfile = async (request, reply) => {
         mobilephone: true,
         point: true,
         bankAccount: true, // ส่งกลับเลขบัญชีธนาคาร
+        bankId: true,
         createdAt: true,
         updatedAt: true,
       }
@@ -335,14 +337,24 @@ const getMyProfile = async (request, reply) => {
       });
     }
 
+    const bankAccountDecode = atob(user.bankAccount) //ถอดรหัสจาก btoa
+    // ค้นหาบัญชีธนาคารตามไอดี
+    const bank = await prisma.bank.findUnique({
+      where: { id: user.bankId },
+      select: {
+        nameTh: true,
+        nameEn: true,
+      }
+    });
     reply.code(200).send({
       status: "success",
       message: "User retrieved successfully",
       data: {
         ...user, // รวมข้อมูลที่ได้จาก select
-        bank: user.bank ? {
-          nameTh: user.bank.nameTh,
-          nameEn: user.bank.nameEn,
+        bankAccount: bankAccountDecode,
+        bank: user.bankId ? {
+          nameTh: bank.nameTh,
+          nameEn: bank.nameEn,
         } : null, // ถ้าผู้ใช้ไม่มีธนาคาร
       },
     });
@@ -611,6 +623,101 @@ const validateToken = (token) => {
   }
 };
 
+//เพิ่มบัญชีธนาคารของผู้ใช้
+const updateUserBankAccount = async (request, reply) => {
+  try {
+    const token = request.headers.authorization.split(" ")[1]; // ดึง Token จาก Header
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET); // ตรวจสอบ Token
+    const userId = decodedToken.userId; // ดึง `userId` จาก Token
+
+    // console.log("User ID from Token:", userId);
+
+    const { bankid, bankaccountname, bankaccount } = request.body;
+
+    const hashedBankAccount = btoa(bankaccount) //เข้ารหัสแบบ btoa
+
+    // console.log(chalk.red(request.body));
+    console.log(chalk.red(JSON.stringify(request.body, null, 2)));
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        bankId: bankid,
+        bankAccount: hashedBankAccount,
+        bankAccountName: bankaccountname,
+      },
+    });
+
+
+    reply.code(200).send({
+      status: "success",
+      message: "User add Bank successfully",
+      data: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error add bank user:", error);
+
+    if (error.name === "JsonWebTokenError") {
+      return reply.code(401).send({
+        status: "error",
+        message: "Invalid Token",
+      });
+    }
+
+    reply.code(500).send({
+      status: "error",
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+
+}
+const editUserBankAccount = async (request, reply) => {
+  try {
+    const token = request.headers.authorization.split(" ")[1]; // ดึง Token จาก Header
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET); // ตรวจสอบ Token
+    const userId = decodedToken.userId; // ดึง `userId` จาก Token
+
+    // console.log("User ID from Token:", userId);
+
+    const { bankid, bankaccountname, bankaccount } = request.body;
+
+    const hashedBankAccount = btoa(bankaccount) //เข้ารหัสแบบ btoa
+    // console.log(chalk.red(request.body));
+    console.log(chalk.red(JSON.stringify(request.body, null, 2)));
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        bankId: bankid,
+        bankAccount: hashedBankAccount,
+        bankAccountName: bankaccountname,
+      },
+    });
+
+
+    reply.code(200).send({
+      status: "success",
+      message: "User Bank updated successfully",
+      data: updatedUser,
+    });
+  } catch (error) {
+    console.error("Error updating bank user:", error);
+
+    if (error.name === "JsonWebTokenError") {
+      return reply.code(401).send({
+        status: "error",
+        message: "Invalid Token",
+      });
+    }
+
+    reply.code(500).send({
+      status: "error",
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+
+}
+
 
 const updateUser = async (request, reply) => {
   try {
@@ -762,6 +869,8 @@ module.exports = {
   updateUser,
   uploadFile,
   forgetVerify,
-  resetPasswordByEmail
+  resetPasswordByEmail,
+  updateUserBankAccount,
+  editUserBankAccount
 
 };
