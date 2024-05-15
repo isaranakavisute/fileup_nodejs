@@ -89,12 +89,12 @@ const createQRCodeForPackage = async (request, reply) => {
   const { userId, packageId } = request.body;
 
   try {
-    const package = await prisma.package.findUnique({ where: { id: packageId } });
-    reply.status(200).send({ package })
+    const packagePayment = await prisma.package.findUnique({ where: { id: packageId } });
+    reply.status(200).send({ packagePayment })
 
     // ตรวจสอบหรือสร้าง `Wallet`
     const wallet = await createWalletIfNotExist(userId);
-    const amount = Math.round(package.price * 100); // แปลงจากบาทเป็นสตางค์
+    const amount = Math.round(packagePayment.price * 100); // แปลงจากบาทเป็นสตางค์
     const returnUri = `${process.env.OMISE_RETURN_URL}/payment/success`;
 
     const charge = await omise.charges.create({
@@ -109,11 +109,11 @@ const createQRCodeForPackage = async (request, reply) => {
       await prisma.transaction.create({
         data: {
           transactionId: charge.id,
-          amount: package.price, // ในหน่วยบาท
+          amount: packagePayment.price, // ในหน่วยบาท
           type: "purchase",
           walletId: wallet.id,
           balanceBefore: wallet.balance, // ควรเป็นยอดเงินเริ่มต้น
-          description: `Payment for package:${package.name}`,
+          description: `Payment for package:${packagePayment.name}`,
           status: "PENDING", // กำหนดสถานะเริ่มต้น
         },
       });
@@ -212,7 +212,7 @@ const handleOmiseWebhook = async (request, reply) => {
 
 module.exports = {
   createWalletIfNotExist,
-  createQRCodeForPackage,
+  // createQRCodeForPackage,
   handleOmiseWebhook,
   getPakage,
   getPakageById,
