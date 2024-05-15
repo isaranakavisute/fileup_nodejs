@@ -429,8 +429,8 @@ const getUserById = async (request, reply) => {
 const loginUser = async (request, reply) => {
   const email = request.body.username;
   const password = request.body.password;
-  
-  console.error(request);
+
+  // console.error(request);
   try {
     const user = await prisma.user.findUnique({
       where: { email },
@@ -463,7 +463,7 @@ const registerUser = async (request, reply) => {
   const isDevInstance = true;
 
   if (!isDevInstance) {
-  if (!validateEmail(email)) { // ตรวจสอบว่าอีเมลมีรูปแบบถูกต้อง
+    if (!validateEmail(email)) { // ตรวจสอบว่าอีเมลมีรูปแบบถูกต้อง
       reply.status(400).send({
         error: 'Invalid email format.',
       });

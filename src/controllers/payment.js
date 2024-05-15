@@ -14,7 +14,7 @@ const omise = require('omise')({
 });
 
 //ดึงข้อมูล package ทั้งหมด
-const getPayments = async (request, reply) => {
+const getPakage = async (request, reply) => {
   try {
     const payments = await prisma.package.findMany();
     reply.code(200).send({
@@ -32,7 +32,7 @@ const getPayments = async (request, reply) => {
 };
 
 //ดึงข้อมูล package ตามไอดี
-const getPaymentById = async (request, reply) => {
+const getPakageById = async (request, reply) => {
 
   const { id } = request.params;
 
@@ -88,49 +88,55 @@ const createWalletIfNotExist = async (userId) => {
 const createQRCodeForPackage = async (request, reply) => {
   const { userId, packageId } = request.body;
 
-  try {
-    const package = await prisma.package.findUnique({ where: { id: packageId } });
+  // try {
+  const package = await prisma.package.findUnique({ where: { id: packageId } });
+  reply.status(200).send({ package })
 
-    // ตรวจสอบหรือสร้าง `Wallet`
-    const wallet = await createWalletIfNotExist(userId);
+  // ตรวจสอบหรือสร้าง `Wallet`
+  const wallet = await createWalletIfNotExist(userId);
+  console.log(wallet);
 
-    const amount = Math.round(package.price * 100); // แปลงจากบาทเป็นสตางค์
-    const returnUri = `${process.env.OMISE_RETURN_URI}/payment/success`;
+  const amount = Math.round(package.price * 100); // แปลงจากบาทเป็นสตางค์
+  console.log(amount);
+  const returnUri = `${process.env.OMISE_RETURN_URL}/payment/success`;
+  console.log(returnUri);
 
-    const charge = await omise.charges.create({
-      amount,
-      currency: 'thb',
-      source: { type: 'promptpay' },
-      return_uri: returnUri,
-    });
+  const charge = await omise.charges.create({
+    amount,
+    currency: 'thb',
+    source: { type: 'promptpay' },
+    return_uri: returnUri,
+  });
 
-    if (charge.status === 'pending') {
-      await prisma.transaction.create({
-        data: {
-          transactionId: charge.id,
-          amount: package.price, // ในหน่วยบาท
-          type: "purchase",
-          walletId: wallet.id,
-          balanceBefore: wallet.balance, // ควรเป็นยอดเงินเริ่มต้น
-          description: `Payment for package:${package.name}`,
-          status: "PENDING", // กำหนดสถานะเริ่มต้น
-        },
-      });
+  console.log(charge.status);
 
-      const qrCodeImage = charge.source.scannable_code.image.download_uri;
-      return reply.send({
-        message: 'QR Code created successfully',
-        qrCodeImage,
-        chargeId: charge.id,
-      });
-    }
+  //   if (charge.status === 'pending') {
+  //     await prisma.transaction.create({
+  //       data: {
+  //         transactionId: charge.id,
+  //         amount: package.price, // ในหน่วยบาท
+  //         type: "purchase",
+  //         walletId: wallet.id,
+  //         balanceBefore: wallet.balance, // ควรเป็นยอดเงินเริ่มต้น
+  //         description: `Payment for package:${package.name}`,
+  //         status: "PENDING", // กำหนดสถานะเริ่มต้น
+  //       },
+  //     });
 
-    return reply.status(400).send({ error: 'Failed to create QR Code payment' });
+  //     const qrCodeImage = charge.source.scannable_code.image.download_uri;
+  //     return reply.send({
+  //       message: 'QR Code created successfully',
+  //       qrCodeImage,
+  //       chargeId: charge.id,
+  //     });
+  //   }
 
-  } catch (err) {
-    console.error('Error creating QR Code for package:', err);
-    reply.status(500).send({ error: 'Internal Server Error', details: err.message });
-  }
+  //   return reply.status(400).send({ error: 'Failed to create QR Code payment' });
+
+  // } catch (err) {
+  //   console.error('Error creating QR Code for package:', err);
+  //   reply.status(500).send({ error: 'Internal Server Error', details: err.message });
+  // }
 };
 
 
@@ -213,6 +219,6 @@ module.exports = {
   createWalletIfNotExist,
   createQRCodeForPackage,
   handleOmiseWebhook,
-  getPayments,
-  getPaymentById,
+  getPakage,
+  getPakageById,
 };
