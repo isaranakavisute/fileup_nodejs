@@ -31,6 +31,7 @@ const bankRoute = (app) => {
   app.get('/banks/:id', controllers.bank.getBankByID);
 }
 
+// test
 module.exports = {
   userRoute,
   paymentRoute,
