@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE `user` ADD COLUMN `token` VARCHAR(191) NULL;
+ALTER TABLE `user` ADD COLUMN `keyResetPassword` VARCHAR(191) NULL;
