@@ -26,7 +26,12 @@ const getBankAll = async (request, reply) => {
             });
         }
 
-        reply.code(200).send(bank);
+        reply.code(200).send(
+            {
+                status: "success",
+                message: "Bank retrieved successfully",
+                data: bank
+            });
     } catch (error) {
         reply.code(500).send({
             status: "error",
@@ -63,7 +68,12 @@ const getBankByID = async (request, reply) => {
             });
         }
 
-        reply.code(200).send(bank);
+        reply.code(200).send(
+            {
+                status: "success",
+                message: "Bank retrieved successfully",
+                data: bank
+            });
     } catch (error) {
         reply.code(500).send({
             status: "error",
