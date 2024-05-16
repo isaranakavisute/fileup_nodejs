@@ -108,10 +108,106 @@ const userRoute = (app) => {
         },
       },
     },
+    preHandler: [hooks.auth.validateToken],
     handler: controllers.user.getMyProfile,
   });
  // ดึงข้อมูลโปรไฟล์ของผู้ใช้เอง
-  app.get('/users/:id', { preHandler: [hooks.auth.validateToken] }, controllers.user.getUserById); // ดึงข้อมูลผู้ใช้ตาม ID
+  app.get('/users/:id', {
+    schema: {
+      tags: ['User'], // ระบุหมวดหมู่ของเส้นทาง
+      description: 'Get user by ID', // เพิ่มคำอธิบายเส้นทาง
+      // security: [{ bearerAuth: [] }], // ระบุความปลอดภัยของการใช้งานโดยการใช้โทเค็น Bearer
+      headers: {
+        type: 'object',
+        properties: {
+          Authorization: { type: 'string', description: 'JWT token for authentication' },
+        },
+        required: ['Authorization'],
+      },
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', description: 'User ID to retrieve' },
+        },
+      },
+      response: {
+        200: {
+          description: 'User retrieved successfully', // เพิ่มคำอธิบายสำหรับการตอบกลับสำเร็จ
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+            data: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer' },
+                name: { type: 'string' },
+                lastname: { type: 'string' },
+                mobilephone: { type: 'string' },
+                email: { type: 'string' },
+                createdAt: { type: 'string', format: 'date-time' },
+                updatedAt: { type: 'string', format: 'date-time' },
+              },
+            },
+          },
+          example: {
+            status: 'success',
+            message: 'User retrieved successfully',
+            data: {
+              id: 1,
+              name: 'John',
+              lastname: 'Doe',
+              mobilephone: '1234567890',
+              email: 'johndoe@example.com',
+              createdAt: '2024-05-16T09:30:00Z',
+              updatedAt: '2024-05-16T10:30:00Z',
+            },
+          },
+        },
+        404: {
+          description: 'User not found', // เพิ่มคำอธิบายสำหรับการตอบกลับเมื่อไม่พบผู้ใช้
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+          },
+          example: {
+            status: 'error',
+            message: 'User not found',
+          },
+        },
+        401: {
+          description: 'Unauthorized', // เพิ่มคำอธิบายสำหรับการตอบกลับที่ไม่ได้รับอนุญาต
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+          },
+          example: {
+            status: 'error',
+            message: 'Unauthorized - Token required',
+          },
+        },
+        500: {
+          description: 'Internal Server Error', // เพิ่มคำอธิบายสำหรับการตอบกลับที่เกิดข้อผิดพลาดบริการภายใน
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+            error: { type: 'string' },
+          },
+          example: {
+            status: 'error',
+            message: 'Internal Server Error',
+            error: 'An unexpected error occurred',
+          },
+        },
+      },
+    },
+    handler: controllers.user.getUserById, // ระบุฟังก์ชันการดึงข้อมูลผู้ใช้ตาม ID
+  }); // ดึงข้อมูลผู้ใช้ตาม ID
+
+
   app.post('/users', {
     schema: {
       tags: ['User'],
@@ -179,6 +275,9 @@ const userRoute = (app) => {
     },
     handler: controllers.user.registerUser,
   }); // สร้างผู้ใช้ใหม่
+
+
+
   app.patch('/users/profile', {
     schema: {
       tags: ['User'],
@@ -265,10 +364,198 @@ const userRoute = (app) => {
         },
       },
     },
+    preHandler: [hooks.auth.validateToken],
     handler: controllers.user.updateUser,
   }); // อัปเดตข้อมูลโปรไฟล์
-  app.patch('/users/change-password', { preHandler: [hooks.auth.validateToken] }, controllers.user.changePassword); // เปลี่ยนรหัสผ่าน
-  app.patch('/users/:id/change-phonenumber', { preHandler: [hooks.auth.validateToken] }, controllers.user.changePhoneNumber); // เปลี่ยนหมายเลขโทรศัพท์.
+
+
+
+  app.patch('/users/change-password', {  
+    schema: {
+      tags: ['User'], // ระบุหมวดหมู่ของเส้นทาง
+      description: 'Change user password', // เพิ่มคำอธิบายเส้นทาง
+      // security: [{ bearerAuth: [] }], // ระบุว่าการเข้าถึงต้องใช้ Bearer token
+      headers: {
+        type: 'object',
+        properties: {
+          Authorization: { type: 'string', description: 'JWT token for authentication' },
+        },
+        required: ['Authorization'],
+      },
+      body: {
+        type: 'object',
+        properties: {
+          newPassword: { type: 'string', description: 'New password to set' },
+        },
+        required: ['newPassword'],
+        example: {
+          newPassword: 'newSecurePassword123!',
+        },
+      },
+      response: {
+        200: {
+          description: 'Password changed successfully', // เพิ่มคำอธิบายสำหรับการตอบกลับสำเร็จ
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+            data: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer' },
+                name: { type: 'string' },
+                lastname: { type: 'string' },
+                mobilephone: { type: 'string' },
+                email: { type: 'string' },
+                createdAt: { type: 'string', format: 'date-time' },
+                updatedAt: { type: 'string', format: 'date-time' },
+              },
+            },
+          },
+          example: {
+            status: 'success',
+            message: 'Password changed successfully',
+            data: {
+              id: 1,
+              name: 'John',
+              lastname: 'Doe',
+              mobilephone: '1234567890',
+              email: 'johndoe@example.com',
+              createdAt: '2024-05-16T09:30:00Z',
+              updatedAt: '2024-05-16T10:30:00Z',
+            },
+          },
+        },
+        401: {
+          description: 'Invalid Token', // เพิ่มคำอธิบายสำหรับการตอบกลับที่ไม่ได้รับอนุญาต
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+          },
+          example: {
+            status: 'error',
+            message: 'Invalid Token',
+          },
+        },
+        500: {
+          description: 'Internal Server Error', // เพิ่มคำอธิบายสำหรับการตอบกลับที่เกิดข้อผิดพลาดบริการภายใน
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+            error: { type: 'string' },
+          },
+          example: {
+            status: 'error',
+            message: 'Internal Server Error',
+            error: 'An unexpected error occurred',
+          },
+        },
+      },
+    },
+  preHandler: [hooks.auth.validateToken], // Assuming you have a validateToken hook
+  handler: controllers.user.changePassword,
+}); // เปลี่ยนรหัสผ่าน
+
+
+
+  app.patch('/users/:id/change-phonenumber', {
+    schema: {
+      tags: ['User'], // ระบุหมวดหมู่ของเส้นทาง
+      description: 'Change user phone number', // เพิ่มคำอธิบายเส้นทาง
+      // security: [{ bearerAuth: [] }], // ระบุความปลอดภัยของการใช้งานโดยการใช้โทเค็น Bearer
+      headers: {
+        type: 'object',
+        properties: {
+          Authorization: { type: 'string', description: 'JWT token for authentication' },
+        },
+        required: ['Authorization'],
+      },
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', description: 'User ID' },
+        },
+      },
+      body: {
+        type: 'object',
+        properties: {
+          newPhoneNumber: { type: 'string', description: 'New phone number to set' },
+        },
+        required: ['newPhoneNumber'],
+        example: {
+          newPhoneNumber: '01234567890',
+        },
+      },
+      response: {
+        200: {
+          description: 'User phone number changed successfully', // เพิ่มคำอธิบายสำหรับการตอบกลับสำเร็จ
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+            data: {
+              type: 'object',
+              properties: {
+                id: { type: 'integer' },
+                name: { type: 'string' },
+                lastname: { type: 'string' },
+                mobilephone: { type: 'string' },
+                email: { type: 'string' },
+                createdAt: { type: 'string', format: 'date-time' },
+                updatedAt: { type: 'string', format: 'date-time' },
+              },
+            },
+          },
+          example: {
+            status: 'success',
+            message: 'User phone number changed successfully',
+            data: {
+              id: 1,
+              name: 'John',
+              lastname: 'Doe',
+              mobilephone: '01234567890',
+              email: 'johndoe@example.com',
+              createdAt: '2024-05-16T09:30:00Z',
+              updatedAt: '2024-05-16T10:30:00Z',
+            },
+          },
+        },
+        401: {
+          description: 'Unauthorized', // เพิ่มคำอธิบายสำหรับการตอบกลับที่ไม่ได้รับอนุญาต
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+          },
+          example: {
+            status: 'error',
+            message: 'Unauthorized - Token required',
+          },
+        },
+        500: {
+          description: 'Internal Server Error', // เพิ่มคำอธิบายสำหรับการตอบกลับที่เกิดข้อผิดพลาดบริการภายใน
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+            error: { type: 'string' },
+          },
+          example: {
+            status: 'error',
+            message: 'Internal Server Error',
+            error: 'An unexpected error occurred',
+          },
+        },
+      },
+    },
+    preHandler: [hooks.auth.validateToken], 
+    handler: controllers.user.changePhoneNumber, // ระบุฟังก์ชันการเปลี่ยนหมายเลขโทรศัพท์ของผู้ใช้
+  }); // เปลี่ยนหมายเลขโทรศัพท์.
+
+
+
   app.patch('/users/:id/reset-password', {
     schema: {
       tags: ['User'],
@@ -361,6 +648,8 @@ const userRoute = (app) => {
     handler: controllers.user.resetPassword,
   });
  // รีเซ็ตรหัสผ่าน.
+
+
   app.post('/users/forget-password', {
     schema: {
       tags: ['User'],
@@ -409,6 +698,7 @@ const userRoute = (app) => {
   app.post('/users/editbankaccount', { preHandler: [hooks.auth.validateToken] }, controllers.user.editUserBankAccount); //แก้ไขบัญชีธนาคาร
   app.post('/users/login', {
     schema: {
+      tags: ['User'],
       description: 'User login',
       body: {
         type: 'object',
@@ -442,7 +732,51 @@ const userRoute = (app) => {
     },
     handler: controllers.user.loginUser,
   }); // เข้าสู่ระบบ
-  app.post('/users/logout', { preHandler: [hooks.auth.validateToken] }, controllers.user.logoutUser); // ออกจากระบบ
+  app.post('/users/logout', {
+    schema: {
+      tags: ['User'], // ระบุหมวดหมู่ของเส้นทาง
+      description: 'Logout user and revoke access token', // เพิ่มคำอธิบายเส้นทาง
+      headers: {
+        type: 'object',
+        properties: {
+          Authorization: { type: 'string', description: 'JWT token for authentication' },
+        },
+        required: ['Authorization'],
+      },
+      response: {
+        200: {
+          description: 'Sign-out successful', // เพิ่มคำอธิบายสำหรับการตอบกลับสำเร็จ
+          type: 'object',
+          properties: {
+            message: { type: 'string' },
+          },
+          example: {
+            message: 'Sign-out successful',
+          },
+        },
+        401: {
+          description: 'Unauthorized', // เพิ่มคำอธิบายสำหรับการตอบกลับที่ไม่ได้รับอนุญาต
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+          },
+          example: {
+            status: 'error',
+            message: 'Unauthorized - Token required',
+          },
+        },
+        500: {
+          description: 'Internal Server Error', // เพิ่มคำอธิบายสำหรับการตอบกลับที่เกิดข้อผิดพลาดบริการภายใน
+          type: 'string',
+          example: 'Error during sign-out',
+        },
+      },
+    },
+    preHandler: [hooks.auth.validateToken], 
+    handler: controllers.user.logoutUser, // ระบุฟังก์ชันการออกจากระบบผู้ใช้
+  }); // ออกจากระบบ
+  
   app.delete('/users/:id', { preHandler: [hooks.auth.validateToken] }, controllers.user.deleteUserById); // ลบผู้ใช้ตาม ID
 };
 
