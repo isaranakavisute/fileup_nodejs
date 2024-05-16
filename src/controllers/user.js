@@ -156,7 +156,7 @@ const forgetVerify = async (request, reply) => {
     await prisma.user.update({
       where: { email: email },
       data: {
-        token: recoveryCode,
+        keyResetPassword: recoveryCode,
       },
     })
     forgetPassword(fullname, email, recoveryCode, reply); // function ส่งแจ้งเตือนไปยัง email
@@ -336,28 +336,39 @@ const getMyProfile = async (request, reply) => {
         message: "User not found",
       });
     }
+    if (user.bankId === null) {
+      reply.code(200).send({
+        status: "success",
+        message: "User retrieved successfully",
+        data: {
+          ...user, // รวมข้อมูลที่ได้จาก select
+          bank: null, // ถ้าผู้ใช้ไม่มีธนาคาร
+        }
+      })
+    } else {
+      const bankAccountDecode = atob(user.bankAccount) //ถอดรหัสจาก btoa
+      // ค้นหาบัญชีธนาคารตามไอดี
+      const bank = await prisma.bank.findUnique({
+        where: { id: user.bankId },
+        select: {
+          nameTh: true,
+          nameEn: true,
+        }
+      });
+      reply.code(200).send({
+        status: "success",
+        message: "User retrieved successfully",
+        data: {
+          ...user, // รวมข้อมูลที่ได้จาก select
+          bankAccount: bankAccountDecode,
+          bank: user.bankId ? {
+            nameTh: bank.nameTh,
+            nameEn: bank.nameEn,
+          } : null, // ถ้าผู้ใช้ไม่มีธนาคาร
+        },
+      });
+    }
 
-    const bankAccountDecode = atob(user.bankAccount) //ถอดรหัสจาก btoa
-    // ค้นหาบัญชีธนาคารตามไอดี
-    const bank = await prisma.bank.findUnique({
-      where: { id: user.bankId },
-      select: {
-        nameTh: true,
-        nameEn: true,
-      }
-    });
-    reply.code(200).send({
-      status: "success",
-      message: "User retrieved successfully",
-      data: {
-        ...user, // รวมข้อมูลที่ได้จาก select
-        bankAccount: bankAccountDecode,
-        bank: user.bankId ? {
-          nameTh: bank.nameTh,
-          nameEn: bank.nameEn,
-        } : null, // ถ้าผู้ใช้ไม่มีธนาคาร
-      },
-    });
   } catch (error) {
     reply.code(500).send({
       status: "error",
@@ -427,7 +438,7 @@ const getUserById = async (request, reply) => {
 
 
 const loginUser = async (request, reply) => {
-  const email = request.body.username;
+  const email = request.body.email;
   const password = request.body.password;
 
   // console.error(request);
@@ -437,18 +448,20 @@ const loginUser = async (request, reply) => {
     });
 
     if (!user) {
-      throw new Error('Invalid username');
+      reply.status(401).send('Invalid Email');
+      // throw new Error('Invalid username');
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
     if (!isPasswordCorrect) {
-      throw new Error('Invalid password');
+      reply.status(401).send('Invalid Password');
+      // throw new Error('Invalid password');
     }
 
     const token = generateToken(user);
 
-    reply.send({ token });
+    reply.status(200).send({ token });
   } catch (error) {
     console.error('Error during login:', error.message);
     reply.status(401).send('Invalid credentials');
@@ -458,23 +471,20 @@ const loginUser = async (request, reply) => {
 const registerUser = async (request, reply) => {
   const name = request.body.firstName;
   const lastname = request.body.lastName;
-  const email = request.body.username;
+  const email = request.body.email;
   const password = request.body.password;
+  const mobilephone = request.body.mobilephone;
   const isDevInstance = true;
 
-  if (!isDevInstance) {
+  if (isDevInstance) {
     if (!validateEmail(email)) { // ตรวจสอบว่าอีเมลมีรูปแบบถูกต้อง
-      reply.status(400).send({
-        error: 'Invalid email format.',
-      });
+      reply.status(400).send({ error: 'Invalid email format.' });
       console.log('email failed');
       return;
     }
 
     if (!validatePassword(password)) { // ตรวจสอบรหัสผ่าน
-      reply.status(400).send({
-        error: 'Invalid characters in password. Avoid using ";$^*.',
-      });
+      reply.status(400).send({ error: 'Invalid characters in password. Avoid using ";$^*.' });
       console.log('password failed');
       return;
     }
@@ -504,6 +514,7 @@ const registerUser = async (request, reply) => {
         password: hashedPassword,
         email,
         username: email,
+        mobilephone,
       },
     });
     reply.status(201).send({
@@ -656,10 +667,21 @@ const updateUserBankAccount = async (request, reply) => {
 
     // console.log("User ID from Token:", userId);
 
-    const { bankid, bankaccountname, bankaccount } = request.body;
+    const { bankid, bankaccountname, bankaccount, password } = request.body;
+
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    })
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordCorrect) {
+      reply.status(401).send('Invalid Password');
+      // throw new Error('Invalid password');
+    }
 
     const hashedBankAccount = btoa(bankaccount) //เข้ารหัสแบบ btoa
-
     // console.log(chalk.red(request.body));
     console.log(chalk.red(JSON.stringify(request.body, null, 2)));
     const updatedUser = await prisma.user.update({
@@ -706,7 +728,19 @@ const editUserBankAccount = async (request, reply) => {
 
     // console.log("User ID from Token:", userId);
 
-    const { bankid, bankaccountname, bankaccount } = request.body;
+    const { bankid, bankaccountname, bankaccount, password } = request.body;
+
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    })
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordCorrect) {
+      reply.status(401).send('Invalid Password');
+      // throw new Error('Invalid password');
+    }
 
     const hashedBankAccount = btoa(bankaccount) //เข้ารหัสแบบ btoa
     // console.log(chalk.red(request.body));
@@ -811,7 +845,7 @@ const forgetPassword = async (fullname, email, keyResetPassword, reply) => {
     body: {
       name: " " + fullname,
       intro:
-        '<p>Please click here to <a href="http://localhost:3000/forgetpassword/' +
+        `<p>Please click here to <a href="${process.env.HOST}/forgetpassword/` +
         keyResetPassword +
         '"> Reset </a> your password.</a></p>',
     },
@@ -827,6 +861,7 @@ const forgetPassword = async (fullname, email, keyResetPassword, reply) => {
     subject: "Reset Password!!!",
     html: mail,
   };
+
 
   transporter
     .sendMail(message)
