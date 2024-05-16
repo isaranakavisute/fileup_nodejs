@@ -212,7 +212,7 @@ const handleOmiseWebhook = async (request, reply) => {
 
 module.exports = {
   createWalletIfNotExist,
-  // createQRCodeForPackage,
+  createQRCodeForPackage,
   handleOmiseWebhook,
   getPakage,
   getPakageById,

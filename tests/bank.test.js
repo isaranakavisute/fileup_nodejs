@@ -1,6 +1,6 @@
 const buildApp = require('../src/app')
 
-test('should return OK', async () => {
+test('Get bank All', async () => {
     const appOptions = {
         logger: true,
     }
