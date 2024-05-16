@@ -770,6 +770,16 @@ const userRoute = (app) => {
         },
         required: ['bankid', 'bankaccountname', 'bankaccount']
       },
+      headers: {
+        type: 'object',
+        properties: {
+          authorization: { type: 'string', description: 'Bearer token' },
+        },
+        required: ['authorization'],
+        example: {
+          authorization: 'Bearer your_jwt_token_here',
+        },
+      },
       response: {
         200: {
           description: 'Bank account added successfully',
@@ -817,7 +827,17 @@ const userRoute = (app) => {
       description: 'Edit user bank account',
       tags: ['User'],
       summary: 'Edit bank account',
-      // security: [{ Bearer: [] }],
+     // security: [{ Bearer: [] }],
+      headers: {
+        type: 'object',
+        properties: {
+          authorization: { type: 'string', description: 'Bearer token' },
+        },
+        required: ['authorization'],
+        example: {
+          authorization: 'Bearer your_jwt_token_here',
+        },
+      },
       body: {
         type: 'object',
         properties: {
@@ -964,6 +984,16 @@ const userRoute = (app) => {
         properties: {
           id: { type: 'string' }
         }
+      },
+      headers: {
+        type: 'object',
+        properties: {
+          authorization: { type: 'string', description: 'Bearer token' },
+        },
+        required: ['authorization'],
+        example: {
+          authorization: 'Bearer your_jwt_token_here',
+        },
       },
       response: {
         200: {
