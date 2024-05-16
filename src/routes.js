@@ -701,9 +701,173 @@ const userRoute = (app) => {
     },
     handler: controllers.user.forgetVerify
   });  //ลืมรหัสผ่าน
-  app.post('/users/forgetpassword/:keyResetPassword', controllers.user.resetPasswordByEmail); //เปลี่ยนรหัสผ่านลิงค์ที่ส่งไปยัง Email.
-  app.post('/users/addbankaccount', { preHandler: [hooks.auth.validateToken] }, controllers.user.updateUserBankAccount); //เพิ่มบัญชีธนาคาร
-  app.post('/users/editbankaccount', { preHandler: [hooks.auth.validateToken] }, controllers.user.editUserBankAccount); //แก้ไขบัญชีธนาคาร
+  app.post('/users/forgetpassword/:keyResetPassword', {
+    schema: {
+      description: 'Reset user password by key',
+      tags: ['User'],
+      summary: 'Reset password by key',
+      params: {
+        type: 'object',
+        properties: {
+          keyResetPassword: { type: 'string' }
+        },
+        required: ['keyResetPassword']
+      },
+      body: {
+        type: 'object',
+        properties: {
+          newpassword: { type: 'string' },
+          confirmnewpassword: { type: 'string' }
+        },
+        required: ['newpassword', 'confirmnewpassword']
+      },
+      response: {
+        200: {
+          description: 'Password reset successfully',
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' }
+          }
+        },
+        400: {
+          description: 'Invalid characters in password',
+          type: 'object',
+          properties: {
+            error: { type: 'string' }
+          }
+        },
+        500: {
+          description: 'Internal Server Error',
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+            details: { type: 'string' }
+          }
+        }
+      }
+    },
+    handler: controllers.user.resetPasswordByEmail
+  }); //เปลี่ยนรหัสผ่านลิงค์ที่ส่งไปยัง Email.
+
+
+
+
+  app.post('/users/addbankaccount', {
+    preHandler: [hooks.auth.validateToken],
+    schema: {
+      description: 'Add or update user bank account',
+      tags: ['User'],
+      summary: 'Add bank account',
+      // security: [{ Bearer: [] }],
+      body: {
+        type: 'object',
+        properties: {
+          bankid: { type: 'number' },
+          bankaccountname: { type: 'string' },
+          bankaccount: { type: 'string' }
+        },
+        required: ['bankid', 'bankaccountname', 'bankaccount']
+      },
+      response: {
+        200: {
+          description: 'Bank account added successfully',
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+            data: {
+              type: 'object',
+              properties: {
+                id: { type: 'number' },
+                bankId: { type: 'number' },
+                bankAccount: { type: 'string' },
+                bankAccountName: { type: 'string' }
+              }
+            }
+          }
+        },
+        401: {
+          description: 'Invalid Token',
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' }
+          }
+        },
+        500: {
+          description: 'Internal Server Error',
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    },
+    handler: controllers.user.updateUserBankAccount
+  }); //เพิ่มบัญชีธนาคาร
+
+
+  app.post('/users/editbankaccount', {
+    preHandler: [hooks.auth.validateToken],
+    schema: {
+      description: 'Edit user bank account',
+      tags: ['User'],
+      summary: 'Edit bank account',
+      // security: [{ Bearer: [] }],
+      body: {
+        type: 'object',
+        properties: {
+          bankid: { type: 'number' },
+          bankaccountname: { type: 'string' },
+          bankaccount: { type: 'string' }
+        },
+        required: ['bankid', 'bankaccountname', 'bankaccount']
+      },
+      response: {
+        200: {
+          description: 'Bank account updated successfully',
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+            data: {
+              type: 'object',
+              properties: {
+                id: { type: 'number' },
+                bankId: { type: 'number' },
+                bankAccount: { type: 'string' },
+                bankAccountName: { type: 'string' }
+              }
+            }
+          }
+        },
+        401: {
+          description: 'Invalid Token',
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' }
+          }
+        },
+        500: {
+          description: 'Internal Server Error',
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+            error: { type: 'string' }
+          }
+        }
+      }
+    },
+    handler: controllers.user.editUserBankAccount
+  }); //แก้ไขบัญชีธนาคาร
+
+
   app.post('/users/login', {
     schema: {
       tags: ['User'],
@@ -787,7 +951,49 @@ const userRoute = (app) => {
     handler: controllers.user.logoutUser, // ระบุฟังก์ชันการออกจากระบบผู้ใช้
   }); // ออกจากระบบ
   
-  app.delete('/users/:id', { preHandler: [hooks.auth.validateToken] }, controllers.user.deleteUserById); // ลบผู้ใช้ตาม ID
+  app.delete('/users/:id',  {
+    preHandler: [hooks.auth.validateToken],
+    schema: {
+      description: 'Delete a user by ID',
+      tags: ['User'],
+      summary: 'Delete user by ID',
+      summary: 'Delete user by ID',
+      // security: [{ Bearer: [] }],
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          description: 'Successful response',
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' }
+          }
+        },
+        404: {
+          description: 'User not found',
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' }
+          }
+        },
+        500: {
+          description: 'Internal Server Error',
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' }
+          }
+        }
+      }
+    },
+    handler: controllers.user.deleteUserById
+  }); // ลบผู้ใช้ตาม ID
 };
 
 
@@ -1058,8 +1264,114 @@ const paymentRoute = (app) => {
 };
 
 const bankRoute = (app) => {
-  app.get('/banks', controllers.bank.getBankAll);
-  app.get('/banks/:id', controllers.bank.getBankByID);
+  app.get('/banks',  {
+    schema: {
+      description: 'Retrieve all banks',
+      tags: ['Setting'],
+      summary: 'Get all banks',
+      response: {
+        200: {
+          description: 'Successful response',
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+            data: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'number' },
+                  nameTh: { type: 'string' },
+                  nameEn: { type: 'string' },
+                  shortName: { type: 'string' },
+                  logo: { type: 'string' },
+                  status: { type: 'string' },
+                  createdAt: { type: 'string' },
+                  updatedAt: { type: 'string' }
+                }
+              }
+            }
+          }
+        },
+        404: {
+          description: 'Banks not found',
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' }
+          }
+        },
+        500: {
+          description: 'Internal Server Error',
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+            details: { type: 'string' }
+          }
+        }
+      }
+    },
+    handler: controllers.bank.getBankAll
+  });
+
+
+
+  app.get('/banks/:id', {
+    schema: {
+      description: 'Retrieve a bank by ID',
+      tags: ['Setting'],
+      summary: 'Get bank by ID',
+      params: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' }
+        }
+      },
+      response: {
+        200: {
+          description: 'Successful response',
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+            data: {
+              type: 'object',
+              properties: {
+                id: { type: 'number' },
+                nameTh: { type: 'string' },
+                nameEn: { type: 'string' },
+                shortName: { type: 'string' },
+                logo: { type: 'string' },
+                status: { type: 'string' },
+                createdAt: { type: 'string' },
+                updatedAt: { type: 'string' }
+              }
+            }
+          }
+        },
+        404: {
+          description: 'Bank not found',
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' }
+          }
+        },
+        500: {
+          description: 'Internal Server Error',
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            message: { type: 'string' },
+            details: { type: 'string' }
+          }
+        }
+      }
+    },
+    handler: controllers.bank.getBankByID
+  });
 }
 
 module.exports = {
