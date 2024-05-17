@@ -1,5 +1,10 @@
 const controllers = require('./controllers')
 const hooks = require('./hooks')
+const multer = require('multer');
+
+// Multer configuration for file uploads
+const storage = multer.memoryStorage(); // Store files in memory
+const upload = multer({ storage: storage });
 
 const userRoute = (app) => {
   app.get('/profile', { preHandler: [hooks.auth.validateToken] }, controllers.user.getMyProfile); // ดึงข้อมูลโปรไฟล์ของผู้ใช้เอง
@@ -15,6 +20,8 @@ const userRoute = (app) => {
   app.post('/users/editbankaccount', { preHandler: [hooks.auth.validateToken] }, controllers.user.editUserBankAccount); //แก้ไขบัญชีธนาคาร
   app.post('/users/login', controllers.user.loginUser); // เข้าสู่ระบบ
   app.post('/users/logout', { preHandler: [hooks.auth.validateToken] }, controllers.user.logoutUser); // ออกจากระบบ.
+  app.post('/users/upload', { preHandler: [hooks.auth.validateToken] }, upload.single('file'), controllers.publisher.userUploadFile);
+  app.post('/users/publish', { preHandler: [hooks.auth.validateToken] }, upload.single('file'), controllers.publisher.publishFile);
   app.delete('/users/:id', { preHandler: [hooks.auth.validateToken] }, controllers.user.deleteUserById); // ลบผู้ใช้ตาม ID
 };
 
