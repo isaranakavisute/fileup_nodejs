@@ -1027,6 +1027,7 @@ const userRoute = (app) => {
     },
     handler: controllers.user.deleteUserById
   }); // ลบผู้ใช้ตาม ID
+}
 
 const paymentRoute = (app) => {
   app.get('/payments', {
