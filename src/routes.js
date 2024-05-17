@@ -117,12 +117,12 @@ const userRoute = (app) => {
     preHandler: [hooks.auth.validateToken],
     handler: controllers.user.getMyProfile,
   });
- // ดึงข้อมูลโปรไฟล์ของผู้ใช้เอง
+  // ดึงข้อมูลโปรไฟล์ของผู้ใช้เอง
   app.get('/users/:id', {
     schema: {
-      tags: ['User'], 
+      tags: ['User'],
       summary: 'Search user by ID',
-      description: 'Get user by ID', 
+      description: 'Get user by ID',
       // security: [{ bearerAuth: [] }], // ระบุความปลอดภัยของการใช้งานโดยการใช้โทเค็น Bearer
       headers: {
         type: 'object',
@@ -222,18 +222,20 @@ const userRoute = (app) => {
       description: 'Register a new user',
       body: {
         type: 'object',
-        required: ['firstName', 'lastName', 'username', 'password'],
+        required: ['firstName', 'lastName', 'email', 'password', "mobilephone"],
         properties: {
           firstName: { type: 'string' },
           lastName: { type: 'string' },
-          username: { type: 'string' },
+          email: { type: 'string' },
           password: { type: 'string' },
+          mobilephone: { type: 'string' },
         },
         example: {
           firstName: 'John',
           lastName: 'Doe',
-          username: 'johndoe@example.com',
+          email: 'johndoe@example.com',
           password: 'securePassword123!',
+          mobilephone: '0917076980',
         },
       },
       response: {
@@ -377,11 +379,11 @@ const userRoute = (app) => {
     handler: controllers.user.updateUser,
   }); // อัปเดตข้อมูลโปรไฟล์
 
-  app.patch('/users/change-password', {  
+  app.patch('/users/change-password', {
     schema: {
-      tags: ['User'], 
+      tags: ['User'],
       summary: 'Change user password',
-      description: 'Change user password', 
+      description: 'Change user password',
       // security: [{ bearerAuth: [] }], 
       headers: {
         type: 'object',
@@ -462,17 +464,17 @@ const userRoute = (app) => {
         },
       },
     },
-  preHandler: [hooks.auth.validateToken], // Assuming you have a validateToken hook
-  handler: controllers.user.changePassword,
-}); // เปลี่ยนรหัสผ่าน
+    preHandler: [hooks.auth.validateToken], // Assuming you have a validateToken hook
+    handler: controllers.user.changePassword,
+  }); // เปลี่ยนรหัสผ่าน
 
 
 
   app.patch('/users/:id/change-phonenumber', {
     schema: {
-      tags: ['User'], 
+      tags: ['User'],
       summary: 'Change user phone number',
-      description: 'Change user phone number', 
+      description: 'Change user phone number',
       // security: [{ bearerAuth: [] }], // ระบุความปลอดภัยของการใช้งานโดยการใช้โทเค็น Bearer
       headers: {
         type: 'object',
@@ -559,7 +561,7 @@ const userRoute = (app) => {
         },
       },
     },
-    preHandler: [hooks.auth.validateToken], 
+    preHandler: [hooks.auth.validateToken],
     handler: controllers.user.changePhoneNumber, // ระบุฟังก์ชันการเปลี่ยนหมายเลขโทรศัพท์ของผู้ใช้
   }); // เปลี่ยนหมายเลขโทรศัพท์.
 
@@ -657,7 +659,7 @@ const userRoute = (app) => {
     preHandler: [hooks.auth.validateToken], // Assuming you have a validateToken hook
     handler: controllers.user.resetPassword,
   });
- // รีเซ็ตรหัสผ่าน.
+  // รีเซ็ตรหัสผ่าน.
 
 
   app.post('/users/forget-password', {
@@ -830,7 +832,7 @@ const userRoute = (app) => {
       description: 'Edit user bank account',
       tags: ['User'],
       summary: 'Edit bank account',
-     // security: [{ Bearer: [] }],
+      // security: [{ Bearer: [] }],
       headers: {
         type: 'object',
         properties: {
@@ -929,12 +931,12 @@ const userRoute = (app) => {
     handler: controllers.user.loginUser,
   }); // เข้าสู่ระบบ
 
-  
+
   app.post('/users/logout', {
     schema: {
-      tags: ['User'], 
+      tags: ['User'],
       summary: 'Logout user and revoke access token',
-      description: 'Logout user and revoke access token', 
+      description: 'Logout user and revoke access token',
       headers: {
         type: 'object',
         properties: {
@@ -972,11 +974,11 @@ const userRoute = (app) => {
         },
       },
     },
-    preHandler: [hooks.auth.validateToken], 
+    preHandler: [hooks.auth.validateToken],
     handler: controllers.user.logoutUser, // ระบุฟังก์ชันการออกจากระบบผู้ใช้
   }); // ออกจากระบบ
 
-  app.delete('/users/:id',  {
+  app.delete('/users/:id', {
     preHandler: [hooks.auth.validateToken],
     schema: {
       description: 'Delete a user by ID',
