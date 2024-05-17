@@ -306,11 +306,13 @@ const userRoute = (app) => {
           name: { type: 'string' },
           lastname: { type: 'string' },
           mobilephone: { type: 'string' },
+          password: { type: 'string' },
         },
         example: {
           name: 'John',
           lastname: 'Doe',
           mobilephone: '1234567890',
+          password: '12345678'
         },
       },
       response: {
@@ -397,9 +399,10 @@ const userRoute = (app) => {
         properties: {
           newPassword: { type: 'string', description: 'New password to set' },
         },
-        required: ['newPassword'],
+        required: ['newPassword', 'password'],
         example: {
           newPassword: 'newSecurePassword123!',
+          password: '12345678'
         },
       },
       response: {
@@ -470,7 +473,7 @@ const userRoute = (app) => {
 
 
 
-  app.patch('/users/:id/change-phonenumber', {
+  app.patch('/users/change-phonenumber', {
     schema: {
       tags: ['User'],
       summary: 'Change user phone number',
@@ -494,9 +497,10 @@ const userRoute = (app) => {
         properties: {
           newPhoneNumber: { type: 'string', description: 'New phone number to set' },
         },
-        required: ['newPhoneNumber'],
+        required: ['newPhoneNumber', 'password'],
         example: {
           newPhoneNumber: '01234567890',
+          password: '12345678'
         },
       },
       response: {
@@ -669,16 +673,12 @@ const userRoute = (app) => {
       description: 'Send reset password via email',
       body: {
         type: 'object',
-        required: ['fullname', 'email', 'keyResetPassword'],
+        required: ['email'],
         properties: {
-          fullname: { type: 'string' },
           email: { type: 'string', format: 'email' },
-          keyResetPassword: { type: 'string' },
         },
         example: {
-          fullname: 'John Doe',
           email: 'johndoe@example.com',
-          keyResetPassword: 'randomkey123',
         },
       },
       response: {
@@ -757,8 +757,6 @@ const userRoute = (app) => {
   }); //เปลี่ยนรหัสผ่านลิงค์ที่ส่งไปยัง Email.
 
 
-
-
   app.post('/users/addbankaccount', {
     preHandler: [hooks.auth.validateToken],
     schema: {
@@ -771,9 +769,10 @@ const userRoute = (app) => {
         properties: {
           bankid: { type: 'number' },
           bankaccountname: { type: 'string' },
-          bankaccount: { type: 'string' }
+          bankaccount: { type: 'string' },
+          password: { type: 'string' }
         },
-        required: ['bankid', 'bankaccountname', 'bankaccount']
+        required: ['bankid', 'bankaccountname', 'bankaccount', 'password']
       },
       headers: {
         type: 'object',
@@ -848,9 +847,10 @@ const userRoute = (app) => {
         properties: {
           bankid: { type: 'number' },
           bankaccountname: { type: 'string' },
-          bankaccount: { type: 'string' }
+          bankaccount: { type: 'string' },
+          password: { type: 'string' }
         },
-        required: ['bankid', 'bankaccountname', 'bankaccount']
+        required: ['bankid', 'bankaccountname', 'bankaccount', 'password']
       },
       response: {
         200: {

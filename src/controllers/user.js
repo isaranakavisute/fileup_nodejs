@@ -374,7 +374,11 @@ const getMyProfile = async (request, reply) => {
         message: "User retrieved successfully",
         data: {
           ...user, // รวมข้อมูลที่ได้จาก select
-          bank: null, // ถ้าผู้ใช้ไม่มีธนาคาร
+          // bank: null, // ถ้าผู้ใช้ไม่มีธนาคาร
+          bank: {
+            nameTh: null,
+            nameEn: null,
+          } // ถ้าผู้ใช้ไม่มีธนาคาร
         }
       })
     } else {
@@ -400,7 +404,6 @@ const getMyProfile = async (request, reply) => {
         },
       });
     }
-
   } catch (error) {
     reply.code(500).send({
       status: "error",
