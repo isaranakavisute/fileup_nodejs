@@ -1,5 +1,10 @@
 const controllers = require('./controllers')
 const hooks = require('./hooks')
+const multer = require('multer');
+
+// Multer configuration for file uploads
+const storage = multer.memoryStorage(); // Store files in memory
+const upload = multer({ storage: storage });
 
 const userRoute = (app) => {
   app.get('/me', {
@@ -1024,8 +1029,6 @@ const userRoute = (app) => {
     },
     handler: controllers.user.deleteUserById
   }); // ลบผู้ใช้ตาม ID
-};
-
 
 const paymentRoute = (app) => {
   app.get('/payments', {

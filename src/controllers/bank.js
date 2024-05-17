@@ -3,6 +3,7 @@ const prisma = new PrismaClient();
 
 
 const getBankAll = async (request, reply) => {
+
     try {
 
         // ค้นหาบัญชีธนาคารทั้งหมด
