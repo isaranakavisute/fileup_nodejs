@@ -1,28 +1,18 @@
-version: '3.8'
+name: vvault_music_backend
 services:
   app:
-    build: .
+    image: music_backend:latest
+    restart: unless-stopped
+    build:
+      context: .
     ports:
-      - "4000:4000"
-    depends_on:
-      - db
+      - 24000:4000
+    volumes:
+      # patch startup file
+      - ./docker/startup-dev.sh:/startup.sh
+      - .:/app
     environment:
-      - DATABASE_URL=mysql://root:1234@db:3306/music
-
-  db:
-    image: mariadb:10.6
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: 1234
-      MYSQL_DATABASE: music
-
-  phpmyadmin:
-    image: phpmyadmin
-    restart: always
-    ports:
-      - "8000:80"
-    environment:
-      PMA_ARBITRARY: '1'
-      PMA_HOST: db
-      MYSQL_ROOT_USER: root
-      MYSQL_ROOT_PASSWORD: 1234
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+    extra_hosts:
+      host: "host-gateway"
