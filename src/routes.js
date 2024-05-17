@@ -898,13 +898,13 @@ const userRoute = (app) => {
       description: 'User login',
       body: {
         type: 'object',
-        required: ['username', 'password'],
+        required: ['email', 'password'],
         properties: {
-          username: { type: 'string' },
+          email: { type: 'string' },
           password: { type: 'string' },
         },
         example: {
-          username: 'test5@dmail.com',
+          email: 'test5@dmail.com',
           password: '1234',
         },
       },
@@ -928,6 +928,8 @@ const userRoute = (app) => {
     },
     handler: controllers.user.loginUser,
   }); // เข้าสู่ระบบ
+
+  
   app.post('/users/logout', {
     schema: {
       tags: ['User'], 
