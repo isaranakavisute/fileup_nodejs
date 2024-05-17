@@ -49,29 +49,54 @@ const canUploadFile = async (userId) => {
 
 
 const changePhoneNumber = async (request, reply) => {
-  const { id } = request.params;
-  const { newPhoneNumber } = request.body;
 
-  try {
-    const updatedUser = await prisma.user.update({
-      where: { id: parseInt(id) },
-      data: {
-        mobilephone: newPhoneNumber,
-      },
-    });
+  const token = request.headers.authorization.split(" ")[1]; // ดึง Token จาก Header
 
-    reply.code(200).send({
-      status: 'success',
-      message: 'User phone number changed successfully',
-      data: updatedUser,
-    });
-  } catch (error) {
-    reply.code(500).send({
+  if (!token) {
+    return reply.code(401).send({
       status: 'error',
-      message: 'Internal Server Error',
-      error: error.message,
+      message: 'Unauthorized: JWT not provided',
     });
   }
+  const { newPhoneNumber, password } = request.body;
+
+  const decodedToken = jwt.verify(token, process.env.JWT_SECRET); // ตรวจสอบ Token
+  const userId = decodedToken.userId; // ดึง `userId` จาก Token
+
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  })
+
+  const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+  if (!isPasswordCorrect) {
+    reply.status(401).send('Invalid Password');
+    // throw new Error('Invalid password');
+  } else {
+
+    try {
+      const updatedUser = await prisma.user.update({
+        where: { id: parseInt(userId) },
+        data: {
+          mobilephone: newPhoneNumber,
+        },
+      });
+
+      reply.code(200).send({
+        status: 'success',
+        message: 'User phone number changed successfully',
+        data: updatedUser,
+      });
+    } catch (error) {
+      reply.code(500).send({
+        status: 'error',
+        message: 'Internal Server Error',
+        error: error.message,
+      });
+    }
+  }
+
 };
 
 const changePassword = async (request, reply) => {
@@ -99,28 +124,35 @@ const changePassword = async (request, reply) => {
       });
     }
 
-
     const userId = decodedToken.userId;
 
-
-    const { newPassword } = request.body;
-
-
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-
-    const updatedUser = await prisma.user.update({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
-      data: {
-        password: hashedPassword,
-      },
-    });
+    })
 
-    reply.code(200).send({
-      status: 'success',
-      message: 'Password changed successfully',
-      data: updatedUser,
-    });
+    const { newPassword, password } = request.body;
+
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) {
+      reply.status(401).send('Invalid Password');
+      // throw new Error('Invalid password');
+    } else {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          password: hashedPassword,
+        },
+      });
+      reply.code(200).send({
+        status: 'success',
+        message: 'Password changed successfully',
+        data: updatedUser,
+      });
+    }
+
   } catch (error) {
     // การจัดการข้อผิดพลาดทั่วไป
     reply.code(500).send({
@@ -532,7 +564,7 @@ const registerUser = async (request, reply) => {
 
 const resetPassword = async (request, reply) => {
 
-  const token = request.headers.authorization?.split(' ')[1];
+  const token = request.headers.authorization.split(" ")[1]; // ดึง Token จาก Header
 
   if (!token) {
     return reply.code(401).send({
@@ -788,25 +820,38 @@ const updateUser = async (request, reply) => {
 
     // console.log("User ID from Token:", userId);
 
-    const { name, lastname, mobilephone } = request.body;
+    const { name, lastname, mobilephone, password } = request.body;
 
-    // console.log(chalk.red(request.body));
-    console.log(chalk.red(JSON.stringify(request.body, null, 2)));
-    const updatedUser = await prisma.user.update({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
-      data: {
-        name,
-        lastname,
-        mobilephone,
-      },
-    });
+    })
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordCorrect) {
+      reply.status(401).send('Invalid Password');
+      // throw new Error('Invalid password');
+    } else {
+
+      // console.log(chalk.red(request.body));
+      console.log(chalk.red(JSON.stringify(request.body, null, 2)));
+      const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          name,
+          lastname,
+          mobilephone,
+        },
+      });
 
 
-    reply.code(200).send({
-      status: "success",
-      message: "User information updated successfully",
-      data: updatedUser,
-    });
+      reply.code(200).send({
+        status: "success",
+        message: "User information updated successfully",
+        data: updatedUser,
+      });
+    }
+
   } catch (error) {
     console.error("Error updating user:", error);
 
