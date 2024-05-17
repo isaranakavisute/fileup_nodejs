@@ -377,8 +377,6 @@ const userRoute = (app) => {
     handler: controllers.user.updateUser,
   }); // อัปเดตข้อมูลโปรไฟล์
 
-
-
   app.patch('/users/change-password', {  
     schema: {
       tags: ['User'], 
