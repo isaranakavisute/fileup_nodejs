@@ -23,6 +23,16 @@ const buildApp = (options) => {
         description: 'Music API Service',
         version: '1.0.0',
       },
+      schemes: ['http','https'],
+      consumes: ['application/json'],
+      produces: ['application/json'],
+      securityDefinitions: {
+        jwt: {
+          type: 'apiKey',
+          name: 'Authorization',
+          in: 'header',
+        },
+      },
     },
     exposeRoute: true,
   });

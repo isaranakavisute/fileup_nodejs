@@ -37,11 +37,20 @@
   "scripts": {
     "dev": "  nodemon index.js SECRET_KEY = musica_gent ",
     "migrate": "node prisma migrate dev ",
-    "seed": "node prisma/seed.js"
+    "seed": "node prisma/seed.js",
+    "test": "jest"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.24.5",
     "jest": "^29.7.0",
     "prisma": "^5.8.1"
+  },
+  "jest": {
+    "transformIgnorePatterns": [
+      "/node_modules/(?!module-to-transform)"
+    ],
+    "transform": {
+      "^.+\\.[t|j]sx?$": "babel-jest"
+    }
   }
 }
