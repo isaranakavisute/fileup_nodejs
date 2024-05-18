@@ -920,7 +920,7 @@ const forgetPassword = async (fullname, email, keyResetPassword, reply) => {
   let message = {
     from: forget.EMAIL,
     to: email,
-    subject: "Reset Password!!!",
+    subject: "คำร้องขอรีเซ็ตรหัสผ่านกับ Music Agent!!!",
     html: mail,
   };
 
