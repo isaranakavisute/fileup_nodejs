@@ -5,6 +5,7 @@
   "license": "MIT",
   "type": "commonjs",
   "dependencies": {
+    "@babel/preset-react": "^7.24.1",
     "@fastify/autoload": "^5.8.2",
     "@fastify/cors": "7.0.0",
     "@fastify/static": "5.0.0",
