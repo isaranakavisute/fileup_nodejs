@@ -120,25 +120,25 @@ const buildApp = require('../src/app')
 // })
 
 
-// // ดึงข้อมูลส่วนตัวของตัวเองจาก Database
-// test('Test getMyProfile', async () => {
-//     const appOptions = {
-//         logger: true,
-//     }
-//     const app = buildApp(appOptions);
+// ดึงข้อมูลส่วนตัวของตัวเองจาก Database
+test('Test getMyProfile', async () => {
+    const appOptions = {
+        logger: true,
+    }
+    const app = buildApp(appOptions);
 
-//     const getMyProfile = await app.inject({
-//         method: 'GET',
-//         url: 'http://localhost:4000/profile',
-//         headers: {
-//             Authorization: process.env.TOKEN_TEST
-//         }
+    const getMyProfile = await app.inject({
+        method: 'GET',
+        url: 'http://localhost:4000/me',
+        headers: {
+            Authorization: process.env.TOKEN_TEST
+        }
 
-//     })
+    })
 
-//     expect(getMyProfile.statusCode).toBe(200) //ตรวจสอบว่า reply.code = 200 หรือไม่
-//     expect(getMyProfile.statusMessage).toBe('OK') //ตรวจสอบว่า statusMessage = OK หรือไม่
-// })
+    expect(getMyProfile.statusCode).toBe(200) //ตรวจสอบว่า reply.code = 200 หรือไม่
+    expect(getMyProfile.statusMessage).toBe('OK') //ตรวจสอบว่า statusMessage = OK หรือไม่
+})
 
 // // ดึงข้อมูล user จาก ID
 // test('Test getUserById', async () => {
@@ -203,7 +203,6 @@ const buildApp = require('../src/app')
 // })
 
 
-//! ยังไม่เสร็จ ติด error
 // // เช็คอีเมลว่ามีในระบบหรือไม่ ถ้ามีให้ส่งลิงค์เปลี่ยนรหัสไปใน email user
 // test('Test forgetVerify', async () => {
 //     const appOptions = {
@@ -221,57 +220,86 @@ const buildApp = require('../src/app')
 //     })
 
 //     expect(haveEmailInDB.statusCode).toBe(200)
-//     // expect(haveEmailInDB.body).toBe(`{"status":"error","message":"Email not found"}`)
-//     console.log(haveEmailInDB);
+//     expect(haveEmailInDB.body).toBe(`{"msg":"you should receive an email"}`)
 
-//     // const noEmailInDB = await app.inject({
-//     //     method: 'POST',
-//     //     url: 'http://localhost:4000/users/forget-password',
-//     //     payload: noEmail
+//     const noEmailInDB = await app.inject({
+//         method: 'POST',
+//         url: 'http://localhost:4000/users/forget-password',
+//         payload: noEmail
+//     })
 
-//     // })
-
-//     // expect(noEmailInDB.statusCode).toBe(404)
-//     // expect(noEmailInDB.body).toBe(`{"status":"error","message":"Email not found"}`)
+//     expect(noEmailInDB.statusCode).toBe(404)
+//     expect(noEmailInDB.body).toBe(`{"status":"error","message":"Email not found"}`)
 // })
 
 
-//* user เพิ่มบัญชีธนาคาร
-test('Test updateUserBankAccount', async () => {
-    const appOptions = {
-        logger: true,
-    }
-    const app = buildApp(appOptions);
+// test('Test resetPasswordByEmail', async () => {
+//     const appOptions = {
+//         logger: true,
+//     }
+//     const app = buildApp(appOptions);
+//     const passwordCorrect = { password: "01234567", newpassword: "01234567" }
+//     const wrongPaswordFormat = { password: "1234567;", newpassword: "1234567;" }
 
-    const updateUserBankAccount = { bankid: 13, bankaccountname: "อนุพงศ์ สูตรเลข", bankaccount: "020283504965", password: "12345678" }
-    const passwordInvalid = { bankid: 13, bankaccountname: "อนุพงศ์ สูตรเลข", bankaccount: "020283504965", password: "1234567" }
+//     // const resetPasswordSuccess = await app.inject({
+//     //     method: 'POST',
+//     //     url: `http://localhost:4000/users/forgetpassword/${process.env.KEY_RESET_PASSWORD}`,
+//     //     payload: passwordCorrect
 
-    const updateBankAccount = await app.inject({
-        method: 'PATCH',
-        url: 'http://localhost:4000/users/addbankaccount',
-        headers: {
-            Authorization: process.env.TOKEN_TEST
-        },
-        payload: updateUserBankAccount
+//     // })
 
-    })
+//     // expect(resetPasswordSuccess.statusCode).toBe(200)
+//     // expect(resetPasswordSuccess.body).toBe(`{"status":"success","message":"update password successfully"}`)
 
-    expect(updateBankAccount.statusCode).toBe(200)
-    expect(updateBankAccount.statusMessage).toBe('OK') //ตรวจสอบว่า statusMessage = OK หรือไม่
+//     const resetPasswordFailed = await app.inject({
+//         method: 'POST',
+//         url: `http://localhost:4000/users/forgetpassword/${process.env.KEY_RESET_PASSWORD}`,
+//         payload: wrongPaswordFormat
+//     })
 
-    const updateBankAccountPasswordInvalid = await app.inject({
-        method: 'PATCH',
-        url: 'http://localhost:4000/users/addbankaccount',
-        headers: {
-            Authorization: process.env.TOKEN_TEST
-        },
-        payload: passwordInvalid
+//     expect(resetPasswordFailed.statusCode).toBe(400)
+//     expect(resetPasswordFailed.body).toBe(`{"error":"Invalid characters in password. Avoid using \\";$^*."}`)
+// })
 
-    })
 
-    expect(updateBankAccountPasswordInvalid.statusCode).toBe(401)
-    expect(updateBankAccountPasswordInvalid.body).toBe('Invalid Password')
-})
+
+
+// //* user เพิ่มบัญชีธนาคาร
+// test('Test updateUserBankAccount', async () => {
+//     const appOptions = {
+//         logger: true,
+//     }
+//     const app = buildApp(appOptions);
+
+//     const updateUserBankAccount = { bankid: 13, bankaccountname: "อนุพงศ์ สูตรเลข", bankaccount: "020283504965", password: "12345678" }
+//     const passwordInvalid = { bankid: 13, bankaccountname: "อนุพงศ์ สูตรเลข", bankaccount: "020283504965", password: "1234567" }
+
+//     const updateBankAccount = await app.inject({
+//         method: 'PATCH',
+//         url: 'http://localhost:4000/users/addbankaccount',
+//         headers: {
+//             Authorization: process.env.TOKEN_TEST
+//         },
+//         payload: updateUserBankAccount
+
+//     })
+
+//     expect(updateBankAccount.statusCode).toBe(200)
+//     expect(updateBankAccount.statusMessage).toBe('OK') //ตรวจสอบว่า statusMessage = OK หรือไม่
+
+//     const updateBankAccountPasswordInvalid = await app.inject({
+//         method: 'PATCH',
+//         url: 'http://localhost:4000/users/addbankaccount',
+//         headers: {
+//             Authorization: process.env.TOKEN_TEST
+//         },
+//         payload: passwordInvalid
+
+//     })
+
+//     expect(updateBankAccountPasswordInvalid.statusCode).toBe(401)
+//     expect(updateBankAccountPasswordInvalid.body).toBe('Invalid Password')
+// })
 
 //user แก้ไขบัญชีธนาคาร
 // test('Test editUserBankAccount', async () => {

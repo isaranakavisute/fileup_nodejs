@@ -719,52 +719,52 @@ const userRoute = (app) => {
     handler: controllers.user.forgetVerify,
   }); //ลืมรหัสผ่าน
   app.post("/users/forgetpassword/:keyResetPassword", {
-    schema: {
-      description: "Reset user password by key",
-      tags: ["User"],
-      summary: "Reset password by key",
-      params: {
-        type: "object",
-        properties: {
-          keyResetPassword: { type: "string" },
-        },
-        required: ["keyResetPassword"],
-      },
-      body: {
-        type: "object",
-        properties: {
-          newpassword: { type: "string" },
-          confirmnewpassword: { type: "string" },
-        },
-        required: ["newpassword", "confirmnewpassword"],
-      },
-      response: {
-        200: {
-          description: "Password reset successfully",
-          type: "object",
-          properties: {
-            status: { type: "string" },
-            message: { type: "string" },
-          },
-        },
-        400: {
-          description: "Invalid characters in password",
-          type: "object",
-          properties: {
-            error: { type: "string" },
-          },
-        },
-        500: {
-          description: "Internal Server Error",
-          type: "object",
-          properties: {
-            status: { type: "string" },
-            message: { type: "string" },
-            details: { type: "string" },
-          },
-        },
-      },
-    },
+    // schema: {
+    //   description: "Reset user password by key",
+    //   tags: ["User"],
+    //   summary: "Reset password by key",
+    //   params: {
+    //     type: "object",
+    //     properties: {
+    //       keyResetPassword: { type: "string" },
+    //     },
+    //     required: ["keyResetPassword"],
+    //   },
+    //   body: {
+    //     type: "object",
+    //     properties: {
+    //       newpassword: { type: "string" },
+    //       confirmnewpassword: { type: "string" },
+    //     },
+    //     required: ["newpassword", "confirmnewpassword"],
+    //   },
+    // response: {
+    //   200: {
+    //     description: "Password reset successfully",
+    //     type: "object",
+    //     properties: {
+    //       status: { type: "string" },
+    //       message: { type: "string" },
+    //     },
+    //   },
+    //   400: {
+    //     description: "Invalid characters in password",
+    //     type: "object",
+    //     properties: {
+    //       error: { type: "string" },
+    //     },
+    //   },
+    //   500: {
+    //     description: "Internal Server Error",
+    //     type: "object",
+    //     properties: {
+    //       status: { type: "string" },
+    //       message: { type: "string" },
+    //       details: { type: "string" },
+    //     },
+    //   },
+    // },
+    // },
     handler: controllers.user.resetPasswordByEmail,
   }); //เปลี่ยนรหัสผ่านลิงค์ที่ส่งไปยัง Email.
 
