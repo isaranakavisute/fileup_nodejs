@@ -165,7 +165,7 @@ const changePassword = async (request, reply) => {
 
 const forgetVerify = async (request, reply) => {
 
-  const { email } = request.body;
+  const email = request.body.email;
   try {
     // ตรวจสอบ email ของผู้ใช้มีอยู่ในระบบหรือไม่
     const checkEmail = await prisma.user.findUnique({
@@ -878,13 +878,19 @@ const updateUser = async (request, reply) => {
 
 // เปลี่ยนรหัสผ่านทางลิงค์ที่ส่งไปทางอีเมล
 const forgetPassword = async (fullname, email, keyResetPassword, reply) => {
-  let config = {
+
+  let config = ({
     service: "gmail",
     auth: {
       user: forget.EMAIL,
-      pass: forget.PASSWORD,
+      pass: forget.PASSWORD
     },
-  };
+    tls: {
+      // do not fail on invalid certs
+      rejectUnauthorized: false
+    },
+  });
+
   let MailGenerator = new Mailgen({
     theme: "default",
     product: {
@@ -892,13 +898,18 @@ const forgetPassword = async (fullname, email, keyResetPassword, reply) => {
       link: "https://mailgen.js/",
     },
   });
+
   let response = {
     body: {
       name: " " + fullname,
-      intro:
-        `<p>Please click here to <a href="${process.env.HOST}/forgetpassword/` +
-        keyResetPassword +
-        '"> Reset </a> your password.</a></p>',
+      intro: "Your MusicAgent password can be reset by clicking the button below. If you did not request a new password, please ignore this email.",
+      action: {
+        button: {
+          color: '#33b5e5',
+          text: 'Reset Password',
+          link: `${process.env.HOST}/forgetpassword/${keyResetPassword}`,
+        },
+      },
     },
   };
 
@@ -909,7 +920,7 @@ const forgetPassword = async (fullname, email, keyResetPassword, reply) => {
   let message = {
     from: forget.EMAIL,
     to: email,
-    subject: "Reset Password!!!",
+    subject: "คำร้องขอรีเซ็ตรหัสผ่านกับ Music Agent!!!",
     html: mail,
   };
 
