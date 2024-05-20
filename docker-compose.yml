@@ -1,7 +1,7 @@
-name: vvault_music_backend
+name: vvault_tree-stock_backend
 services:
   app:
-    image: music_backend:latest
+    image: tree-stock_backend:latest
     restart: unless-stopped
     build:
       context: .
