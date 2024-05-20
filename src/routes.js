@@ -1212,61 +1212,61 @@ const paymentRoute = (app) => {
     },
     preHandler: [hooks.auth.validateToken],
     handler: controllers.payment.getPakageById, // ระบุฟังก์ชันการดึงข้อมูล package โดยใช้ ID
-  }); //ดึงข้อมูล package ตามไอดี
+  }); //ดึงข้อมูล package ตามไอดี 
 
   app.post("/payment/qr-code", {
     preHandler: [hooks.auth.validateToken],
-    schema: {
-      description: "Create QR Code for package payment",
-      tags: ["Payment"],
-      summary: "Create QR Code for payment",
-      summary: "Create QR Code for payment",
-      // security: [{ Bearer: [] }],
-      headers: {
-        type: "object",
-        properties: {
-          Authorization: {
-            type: "string",
-            description: "JWT token for authentication",
-          },
-        },
-        required: ["Authorization"],
-      },
-      body: {
-        type: "object",
-        required: ["userId", "packageId"],
-        properties: {
-          userId: { type: "string" },
-          packageId: { type: "string" },
-        },
-      },
-      response: {
-        200: {
-          description: "Successful response",
-          type: "object",
-          properties: {
-            message: { type: "string" },
-            qrCodeImage: { type: "string" },
-            chargeId: { type: "string" },
-          },
-        },
-        400: {
-          description: "Failed to create QR Code payment",
-          type: "object",
-          properties: {
-            error: { type: "string" },
-          },
-        },
-        500: {
-          description: "Internal Server Error",
-          type: "object",
-          properties: {
-            error: { type: "string" },
-            details: { type: "string" },
-          },
-        },
-      },
-    },
+    // schema: {
+    //   description: "Create QR Code for package payment",
+    //   tags: ["Payment"],
+    //   summary: "Create QR Code for payment",
+    //   summary: "Create QR Code for payment",
+    //   // security: [{ Bearer: [] }],
+    //   headers: {
+    //     type: "object",
+    //     properties: {
+    //       Authorization: {
+    //         type: "string",
+    //         description: "JWT token for authentication",
+    //       },
+    //     },
+    //     required: ["Authorization"],
+    //   },
+    //   body: {
+    //     type: "object",
+    //     required: ["userId", "packageId"],
+    //     properties: {
+    //       userId: { type: "string" },
+    //       packageId: { type: "string" },
+    //     },
+    //   },
+    //   response: {
+    //     200: {
+    //       description: "Successful response",
+    //       type: "object",
+    //       properties: {
+    //         message: { type: "string" },
+    //         qrCodeImage: { type: "string" },
+    //         chargeId: { type: "string" },
+    //       },
+    //     },
+    //     400: {
+    //       description: "Failed to create QR Code payment",
+    //       type: "object",
+    //       properties: {
+    //         error: { type: "string" },
+    //       },
+    //     },
+    //     500: {
+    //       description: "Internal Server Error",
+    //       type: "object",
+    //       properties: {
+    //         error: { type: "string" },
+    //         details: { type: "string" },
+    //       },
+    //     },
+    //   },
+    // },
     handler: controllers.payment.createQRCodeForPackage,
   });
 

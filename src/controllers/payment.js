@@ -90,7 +90,7 @@ const createQRCodeForPackage = async (request, reply) => {
 
   try {
     const packagePayment = await prisma.package.findUnique({ where: { id: packageId } });
-    reply.status(200).send({ packagePayment })
+    // reply.status(200).send({ packagePayment })
 
     // ตรวจสอบหรือสร้าง `Wallet`
     const wallet = await createWalletIfNotExist(userId);
@@ -149,6 +149,7 @@ const handleOmiseWebhook = async (request, reply) => {
         receivedAt: new Date(),
       },
     });
+
 
     if (event.object === 'event' && event.type === 'charge.complete') {
       const charge = event.data;
