@@ -114,6 +114,7 @@ CREATE TABLE `User` (
     `mobilephone` VARCHAR(191) NULL,
     `omiseCustomerId` VARCHAR(191) NULL,
     `keyResetPassword` VARCHAR(191) NULL,
+    `login_status` INTEGER NOT NULL DEFAULT 0,
     `createdAt` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NULL,
     `bankAccount` VARCHAR(191) NULL,

@@ -111,6 +111,7 @@ model User {
   mobilephone      String?
   omiseCustomerId  String?
   keyResetPassword String?
+  login_status     Int            @default(0)
   createdAt        DateTime?      @default(now())
   updatedAt        DateTime?      @updatedAt
   bankAccount      String? // ฟิลด์เก็บเลขบัญชีธนาคาร
@@ -146,6 +147,6 @@ model WebhookEvent {
 }
 
 model Session {
-  id        Int       @id @default(autoincrement())
-  userId    Int
+  id     Int @id @default(autoincrement())
+  userId Int
 }

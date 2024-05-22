@@ -49,7 +49,7 @@ async function seedPackages() {
 }
 
 const banksData = [
-  
+
   { bankName: 'ธนาคารกรุงเทพ', bankFullName: 'BANGKOK BANK PUBLIC COMPANY LIMITED', bankShortName: 'BBL', icon: 'bbl_icon.png', background: 'bbl_background.jpg' },
   { bankName: 'ธนาคารกสิกรไทย', bankFullName: 'Kasikornbank Public Company Limited', bankShortName: 'KBank', icon: 'kbank_icon.png', background: 'kbank_background.jpg' },
   { bankName: 'ธนาคารกรุงไทย', bankFullName: 'Krungthai Bank Public Company Limited', bankShortName: 'KTB', icon: 'ktb_icon.png', background: 'ktb_background.jpg' },

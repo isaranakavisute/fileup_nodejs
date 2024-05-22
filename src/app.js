@@ -1,8 +1,8 @@
 const fastify = require('fastify');
 const cors = require('fastify-cors');
-const paymentRoute = require('./routes');
-const userRoute = require('./routes');
-const bankRoute = require('./routes')
+const paymentRoute = require('./routes/route.payment');
+const userRoute = require('./routes/route.user');
+const bankRoute = require('./routes/route.bank')
 const fastifySwagger = require('fastify-swagger');
 
 const buildApp = (options) => {
@@ -23,7 +23,7 @@ const buildApp = (options) => {
         description: 'Music API Service',
         version: '1.0.0',
       },
-      schemes: ['http','https'],
+      schemes: ['http', 'https'],
       consumes: ['application/json'],
       produces: ['application/json'],
       securityDefinitions: {
