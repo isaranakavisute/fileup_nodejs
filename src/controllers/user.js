@@ -1,26 +1,22 @@
-const { PrismaClient } = require('@prisma/client');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+const { PrismaClient } = require("@prisma/client");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const prisma = new PrismaClient();
-const config = require('../config');
+const config = require("../config");
 // const jwtDecode = require("jwt-decode");
-const jwtDecode = require('jwt-decode')
-const chalk = require('chalk')
-const crypto = require('crypto');
+const jwtDecode = require("jwt-decode");
+const chalk = require("chalk");
+const crypto = require("crypto");
 const randomstring = require("randomstring");
 const nodemailer = require("nodemailer");
-const forget = require('../config/forget')
+const forget = require("../config/forget");
 const Mailgen = require("mailgen");
 
-
-
 const base64UrlDecode = (base64Url) => {
-
-  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-  const buffer = Buffer.from(base64, 'base64');
-  return buffer.toString('utf8');
+  const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+  const buffer = Buffer.from(base64, "base64");
+  return buffer.toString("utf8");
 };
-
 
 const canUploadFile = async (userId) => {
   const today = new Date();
@@ -31,7 +27,8 @@ const canUploadFile = async (userId) => {
   });
 
   // ตรวจสอบการจำกัดจำนวนครั้งอัปโหลดต่อวัน
-  if (dailyUpload && dailyUpload.uploads >= 5) { // สมมุติว่า 5 ครั้งต่อวัน
+  if (dailyUpload && dailyUpload.uploads >= 5) {
+    // สมมุติว่า 5 ครั้งต่อวัน
     return false; // ไม่ให้ทำการอัปโหลด
   }
 
@@ -40,22 +37,24 @@ const canUploadFile = async (userId) => {
     where: { userId },
   });
 
-  if (!subscription || subscription.isActive === false || new Date() > subscription.endDate) {
+  if (
+    !subscription ||
+    subscription.isActive === false ||
+    new Date() > subscription.endDate
+  ) {
     return false; // ไม่ให้ทำการอัปโหลด
   }
 
   return true; // ให้ทำการอัปโหลดได้
 };
 
-
 const changePhoneNumber = async (request, reply) => {
-
   const token = request.headers.authorization.split(" ")[1]; // ดึง Token จาก Header
 
   if (!token) {
     return reply.code(401).send({
-      status: 'error',
-      message: 'Unauthorized: JWT not provided',
+      status: "error",
+      message: "Unauthorized: JWT not provided",
     });
   }
   const { newPhoneNumber, password } = request.body;
@@ -63,18 +62,16 @@ const changePhoneNumber = async (request, reply) => {
   const decodedToken = jwt.verify(token, process.env.JWT_SECRET); // ตรวจสอบ Token
   const userId = decodedToken.userId; // ดึง `userId` จาก Token
 
-
   const user = await prisma.user.findUnique({
     where: { id: userId },
-  })
+  });
 
   const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
   if (!isPasswordCorrect) {
-    reply.status(401).send('Invalid Password');
+    reply.status(401).send("Invalid Password");
     // throw new Error('Invalid password');
   } else {
-
     try {
       const updatedUser = await prisma.user.update({
         where: { id: parseInt(userId) },
@@ -84,24 +81,22 @@ const changePhoneNumber = async (request, reply) => {
       });
 
       reply.code(200).send({
-        status: 'success',
-        message: 'User phone number changed successfully',
+        status: "success",
+        message: "User phone number changed successfully",
         data: updatedUser,
       });
     } catch (error) {
       reply.code(500).send({
-        status: 'error',
-        message: 'Internal Server Error',
+        status: "error",
+        message: "Internal Server Error",
         error: error.message,
       });
     }
   }
-
 };
 
 const changePassword = async (request, reply) => {
   try {
-
     const authorization = request.headers.authorization;
     if (!authorization || !authorization.startsWith("Bearer ")) {
       return reply.code(401).send({
@@ -110,12 +105,10 @@ const changePassword = async (request, reply) => {
       });
     }
 
-
     const token = authorization.replace("Bearer ", "");
     let decodedToken;
 
     try {
-
       decodedToken = jwt.verify(token, process.env.JWT_SECRET);
     } catch (error) {
       return reply.code(401).send({
@@ -128,14 +121,13 @@ const changePassword = async (request, reply) => {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-    })
+    });
 
     const { newPassword, password } = request.body;
 
-
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
-      reply.status(401).send('Invalid Password');
+      reply.status(401).send("Invalid Password");
       // throw new Error('Invalid password');
     } else {
       const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -147,24 +139,22 @@ const changePassword = async (request, reply) => {
         },
       });
       reply.code(200).send({
-        status: 'success',
-        message: 'Password changed successfully',
+        status: "success",
+        message: "Password changed successfully",
         data: updatedUser,
       });
     }
-
   } catch (error) {
     // การจัดการข้อผิดพลาดทั่วไป
     reply.code(500).send({
-      status: 'error',
-      message: 'Internal Server Error',
+      status: "error",
+      message: "Internal Server Error",
       error: error.message,
     });
   }
 };
 
 const forgetVerify = async (request, reply) => {
-
   const email = request.body.email;
   try {
     // ตรวจสอบ email ของผู้ใช้มีอยู่ในระบบหรือไม่
@@ -173,38 +163,40 @@ const forgetVerify = async (request, reply) => {
       select: {
         name: true,
         lastname: true,
-      }
+      },
     });
 
     // ถ้าไม่มีให้แสดง error
     if (!checkEmail) {
-      reply.status(404).send({ status: 'error', message: 'Email not found' });
+      reply.status(404).send({ status: "error", message: "Email not found" });
       return;
     }
 
     // const randomString = randomstring.generate();
-    const recoveryCode = crypto.randomBytes(16).toString('hex');
-    const fullname = checkEmail.name + " " + checkEmail.lastname
+    const recoveryCode = crypto.randomBytes(16).toString("hex");
+    const fullname = checkEmail.name + " " + checkEmail.lastname;
     await prisma.user.update({
       where: { email: email },
       data: {
         keyResetPassword: recoveryCode,
       },
-    })
+    });
     forgetPassword(fullname, email, recoveryCode, reply); // function ส่งแจ้งเตือนไปยัง email
   } catch (error) {
-    console.error('Error Forget Password:', error);
-    reply.status(500).send({ status: 'error', message: 'Internal Server Error' });
+    console.error("Error Forget Password:", error);
+    reply
+      .status(500)
+      .send({ status: "error", message: "Internal Server Error" });
   }
-}
+};
 
 // รีเซ็ตรหัสผ่านจากลิงค์ที่ส่งไปให้ทาง email
 const resetPasswordByEmail = async (request, reply) => {
-
-  const { keyResetPassword } = request.params
+  const { keyResetPassword } = request.params;
   const { newpassword, confirmnewpassword } = request.body;
 
-  if (!validatePassword(newpassword, confirmnewpassword)) { // ตรวจสอบรหัสผ่าน
+  if (!validatePassword(newpassword, confirmnewpassword)) {
+    // ตรวจสอบรหัสผ่าน
     reply.status(400).send({
       error: 'Invalid characters in password. Avoid using ";$^*.',
     });
@@ -212,7 +204,6 @@ const resetPasswordByEmail = async (request, reply) => {
   }
 
   try {
-
     const hashedPassword = await bcrypt.hash(newpassword, 10);
 
     //ตรวจสอบว่า token ที่ส่งมาตรงกับ token ใน database หรือไม่
@@ -225,37 +216,33 @@ const resetPasswordByEmail = async (request, reply) => {
     });
 
     reply.code(200).send({
-      status: 'success',
-      message: 'update password successfully',
+      status: "success",
+      message: "update password successfully",
     });
   } catch (error) {
     reply.code(500).send({
-      status: 'error',
-      message: 'Internal Server Error',
+      status: "error",
+      message: "Internal Server Error",
       details: error.message,
     });
   }
-}
-
+};
 
 const createUser = async (request, reply) => {
-  const {
-    name,
-    password,
-    email,
-    logsRegister,
-  } = request.body;
+  const { name, password, email, logsRegister } = request.body;
 
-  if (!validateEmail(email)) { // ตรวจสอบอีเมล
+  if (!validateEmail(email)) {
+    // ตรวจสอบอีเมล
     return reply.code(400).send({
-      status: 'error',
-      message: 'Invalid email format.',
+      status: "error",
+      message: "Invalid email format.",
     });
   }
 
-  if (!validatePassword(password)) { // ตรวจสอบรหัสผ่าน
+  if (!validatePassword(password)) {
+    // ตรวจสอบรหัสผ่าน
     return reply.code(400).send({
-      status: 'error',
+      status: "error",
       message: 'Password contains invalid characters. Avoid using ";$^*.',
     });
   }
@@ -273,20 +260,18 @@ const createUser = async (request, reply) => {
     });
 
     reply.code(201).send({
-      status: 'success',
-      message: 'User created successfully',
+      status: "success",
+      message: "User created successfully",
       data: newUser,
     });
   } catch (error) {
     reply.code(500).send({
-      status: 'error',
-      message: 'Internal Server Error',
+      status: "error",
+      message: "Internal Server Error",
       details: error.message,
     });
   }
 };
-
-
 
 const deleteUserById = async (request, reply) => {
   const { id } = request.params;
@@ -297,14 +282,16 @@ const deleteUserById = async (request, reply) => {
     });
 
     if (!deletedUser) {
-      reply.status(404).send({ status: 'error', message: 'User not found' });
+      reply.status(404).send({ status: "error", message: "User not found" });
       return;
     }
 
-    reply.send({ status: 'success', message: 'User deleted successfully' });
+    reply.send({ status: "success", message: "User deleted successfully" });
   } catch (error) {
-    console.error('Error deleting user:', error);
-    reply.status(500).send({ status: 'error', message: 'Internal Server Error' });
+    console.error("Error deleting user:", error);
+    reply
+      .status(500)
+      .send({ status: "error", message: "Internal Server Error" });
   }
 };
 
@@ -319,14 +306,11 @@ const generateToken = (user) => {
       email: user.email,
     },
     process.env.JWT_SECRET, // Secret key
-    { expiresIn: '3h' } // เวลาหมดอายุของ token
+    { expiresIn: "3h" } // เวลาหมดอายุของ token
   );
 
   return token;
 };
-
-
-
 
 const getMyProfile = async (request, reply) => {
   try {
@@ -344,7 +328,6 @@ const getMyProfile = async (request, reply) => {
 
     const userId = parseInt(decodedToken.userId); // ใช้ `userId` ที่ถอดรหัสได้
 
-
     // ค้นหาผู้ใช้และรวมข้อมูลธนาคาร
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -359,7 +342,7 @@ const getMyProfile = async (request, reply) => {
         bankId: true,
         createdAt: true,
         updatedAt: true,
-      }
+      },
     });
 
     if (!user) {
@@ -378,18 +361,18 @@ const getMyProfile = async (request, reply) => {
           bank: {
             nameTh: null,
             nameEn: null,
-          } // ถ้าผู้ใช้ไม่มีธนาคาร
-        }
-      })
+          }, // ถ้าผู้ใช้ไม่มีธนาคาร
+        },
+      });
     } else {
-      const bankAccountDecode = atob(user.bankAccount) //ถอดรหัสจาก btoa
+      const bankAccountDecode = atob(user.bankAccount); //ถอดรหัสจาก btoa
       // ค้นหาบัญชีธนาคารตามไอดี
       const bank = await prisma.bank.findUnique({
         where: { id: user.bankId },
         select: {
           nameTh: true,
           nameEn: true,
-        }
+        },
       });
       reply.code(200).send({
         status: "success",
@@ -397,10 +380,12 @@ const getMyProfile = async (request, reply) => {
         data: {
           ...user, // รวมข้อมูลที่ได้จาก select
           bankAccount: bankAccountDecode,
-          bank: user.bankId ? {
-            nameTh: bank.nameTh,
-            nameEn: bank.nameEn,
-          } : null, // ถ้าผู้ใช้ไม่มีธนาคาร
+          bank: user.bankId
+            ? {
+                nameTh: bank.nameTh,
+                nameEn: bank.nameEn,
+              }
+            : null, // ถ้าผู้ใช้ไม่มีธนาคาร
         },
       });
     }
@@ -416,10 +401,10 @@ const getMyProfile = async (request, reply) => {
 const getUserIdFromToken = (token) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('here');
+    console.log("here");
     return decoded.userId;
   } catch (error) {
-    console.error('Error decoding token:', error.message);
+    console.error("Error decoding token:", error.message);
     return null;
   }
 };
@@ -428,14 +413,14 @@ const getUsers = async (request, reply) => {
   try {
     const users = await prisma.user.findMany();
     reply.code(200).send({
-      status: 'success',
-      message: 'Users retrieved successfully',
+      status: "success",
+      message: "Users retrieved successfully",
       data: users,
     });
   } catch (error) {
     reply.code(500).send({
-      status: 'error',
-      message: 'Internal Server Error',
+      status: "error",
+      message: "Internal Server Error",
       error: error.message,
     });
   }
@@ -451,31 +436,29 @@ const getUserById = async (request, reply) => {
 
     if (!user) {
       reply.code(404).send({
-        status: 'error',
-        message: 'User not found',
+        status: "error",
+        message: "User not found",
       });
       return;
     }
 
     reply.code(200).send({
-      status: 'success',
-      message: 'User retrieved successfully',
+      status: "success",
+      message: "User retrieved successfully",
       data: user,
     });
   } catch (error) {
     reply.code(500).send({
-      status: 'error',
-      message: 'Internal Server Error',
+      status: "error",
+      message: "Internal Server Error",
       error: error.message,
     });
   }
 };
 
-
 const loginUser = async (request, reply) => {
   const email = request.body.email;
   const password = request.body.password;
-
 
   // console.error(request);
   try {
@@ -484,34 +467,33 @@ const loginUser = async (request, reply) => {
     });
 
     if (!user) {
-      reply.status(401).send('Invalid Email');
+      reply.status(401).send("Invalid Email");
       // throw new Error('Invalid username');
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
     if (!isPasswordCorrect) {
-      reply.status(401).send('Invalid Password');
+      reply.status(401).send("Invalid Password");
       // throw new Error('Invalid password');
-    } else {
-      if (user.login_status === 1) {
-        reply.status(401).send('This user is logged in from a different location');
-      } else {
-        const user = await prisma.user.update({
-          where: { email },
-          data: {
-            login_status: 1
-          }
-        });
-        const token = generateToken(user);
-
-        reply.status(200).send({ token });
-      }
+    }
+    if (user.login_status === 1) {
+      reply
+        .status(401)
+        .send("This user is logged in from a different location");
     }
 
+    await prisma.user.update({
+      where: { email },
+      data: {
+        login_status: 1,
+      },
+    });
+    const token = generateToken(user);
+    reply.status(200).send({ token });
   } catch (error) {
-    console.error('Error during login:', error.message);
-    reply.status(401).send('Invalid credentials');
+    console.error("Error during login:", error.message);
+    reply.status(401).send("Invalid credentials");
   }
 };
 
@@ -524,15 +506,19 @@ const registerUser = async (request, reply) => {
   const isDevInstance = true;
 
   if (isDevInstance) {
-    if (!validateEmail(email)) { // ตรวจสอบว่าอีเมลมีรูปแบบถูกต้อง
-      reply.status(400).send({ error: 'Invalid email format.' });
-      console.log('email failed');
+    if (!validateEmail(email)) {
+      // ตรวจสอบว่าอีเมลมีรูปแบบถูกต้อง
+      reply.status(400).send({ error: "Invalid email format." });
+      console.log("email failed");
       return;
     }
 
-    if (!validatePassword(password)) { // ตรวจสอบรหัสผ่าน
-      reply.status(400).send({ error: 'Invalid characters in password. Avoid using ";$^*.' });
-      console.log('password failed');
+    if (!validatePassword(password)) {
+      // ตรวจสอบรหัสผ่าน
+      reply
+        .status(400)
+        .send({ error: 'Invalid characters in password. Avoid using ";$^*.' });
+      console.log("password failed");
       return;
     }
 
@@ -543,7 +529,7 @@ const registerUser = async (request, reply) => {
 
     if (existingUser) {
       reply.status(409).send({
-        error: 'Email already exists', // ข้อความเมื่ออีเมลซ้ำ
+        error: "Email already exists", // ข้อความเมื่ออีเมลซ้ำ
       });
       return;
     }
@@ -565,31 +551,28 @@ const registerUser = async (request, reply) => {
       },
     });
     reply.status(201).send({
-      message: 'User registered successfully',
+      message: "User registered successfully",
       userId: newUser.id, // ส่งคืน ID ของผู้ใช้ที่สร้างใหม่
     });
   } catch (error) {
-    console.error('Error during user registration:', error.message);
+    console.error("Error during user registration:", error.message);
     reply.status(500).send({
-      error: 'An error occurred during registration',
+      error: "An error occurred during registration",
     });
   }
 };
 
-
 const resetPassword = async (request, reply) => {
-
   const token = request.headers.authorization.split(" ")[1]; // ดึง Token จาก Header
 
   if (!token) {
     return reply.code(401).send({
-      status: 'error',
-      message: 'Unauthorized: JWT not provided',
+      status: "error",
+      message: "Unauthorized: JWT not provided",
     });
   }
 
   try {
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userIdFromToken = decoded.userId;
 
@@ -598,13 +581,14 @@ const resetPassword = async (request, reply) => {
     // ตรวจสอบว่า ID ที่จะรีเซ็ตตรงกับ ID ใน JWT
     if (userIdFromToken !== parseInt(id)) {
       return reply.code(403).send({
-        status: 'error',
-        message: 'Forbidden: You are not allowed to reset another user\'s password',
+        status: "error",
+        message:
+          "Forbidden: You are not allowed to reset another user's password",
       });
     }
 
     // สร้างรหัสผ่านใหม่
-    const newPassword = crypto.randomBytes(8).toString('hex'); // สร้างรหัสผ่านสุ่มขนาด 16 ตัวอักษร
+    const newPassword = crypto.randomBytes(8).toString("hex"); // สร้างรหัสผ่านสุ่มขนาด 16 ตัวอักษร
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     const updatedUser = await prisma.user.update({
@@ -615,8 +599,8 @@ const resetPassword = async (request, reply) => {
     });
 
     reply.code(200).send({
-      status: 'success',
-      message: 'User password reset successfully',
+      status: "success",
+      message: "User password reset successfully",
       data: {
         user: updatedUser,
         newPassword: newPassword, // ส่งรหัสผ่านใหม่กลับไป
@@ -624,18 +608,15 @@ const resetPassword = async (request, reply) => {
     });
   } catch (error) {
     reply.code(500).send({
-      status: 'error',
-      message: 'Internal Server Error',
+      status: "error",
+      message: "Internal Server Error",
       error: error.message,
     });
   }
 };
 
-
-
 const logoutUser = async (request, reply) => {
   try {
-
     const { authorization } = request.headers;
     if (!authorization || !authorization.startsWith("Bearer ")) {
       return reply.code(401).send({
@@ -652,13 +633,13 @@ const logoutUser = async (request, reply) => {
       where: { id: userId },
       data: {
         login_status: 0,
-      }
-    })
+      },
+    });
 
     // รหัสผู้ใช้จากโทเค็น (วิธีการนี้ขึ้นอยู่กับว่าคุณเก็บข้อมูลโทเค็นอย่างไร)
     console.log("---------------" + userId + "------------------");
     if (!userId) {
-      throw new Error('User not found');
+      throw new Error("User not found");
     }
     // console.log(prisma); // Check if prisma object is defined
     // console.log(prisma.session); // Check if session model is defined
@@ -667,10 +648,10 @@ const logoutUser = async (request, reply) => {
       where: { userId },
     });
 
-    reply.send({ message: 'Sign-out successful' });
+    reply.send({ message: "Sign-out successful" });
   } catch (error) {
-    console.error('Error during sign-out:', error.message);
-    reply.status(500).send('Error during sign-out');
+    console.error("Error during sign-out:", error.message);
+    reply.status(500).send("Error during sign-out");
   }
 };
 
@@ -684,14 +665,13 @@ const validatePassword = (password) => {
   return !forbiddenCharacters.test(password);
 };
 
-
 const validateToken = (token) => {
   try {
-    if (!token || typeof token !== 'string') {
+    if (!token || typeof token !== "string") {
       throw new Error("Invalid token: Token is not a valid string");
     }
 
-    const parts = token.split('.');
+    const parts = token.split(".");
     if (parts.length !== 3) {
       throw new Error("Invalid token: Incorrect JWT structure");
     }
@@ -703,7 +683,7 @@ const validateToken = (token) => {
       throw new Error("Token has expired");
     }
 
-    // console.log(chalk.blue("Decoded token payload:"), payload); 
+    // console.log(chalk.blue("Decoded token payload:"), payload);
     return payload;
   } catch (error) {
     console.error(chalk.red("Error decoding token:"), error);
@@ -722,19 +702,18 @@ const updateUserBankAccount = async (request, reply) => {
 
     const { bankid, bankaccountname, bankaccount, password } = request.body;
 
-
     const user = await prisma.user.findUnique({
       where: { id: userId },
-    })
+    });
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
     if (!isPasswordCorrect) {
-      reply.status(401).send('Invalid Password');
+      reply.status(401).send("Invalid Password");
       // throw new Error('Invalid password');
     }
 
-    const hashedBankAccount = btoa(bankaccount) //เข้ารหัสแบบ btoa
+    const hashedBankAccount = btoa(bankaccount); //เข้ารหัสแบบ btoa
     // console.log(chalk.red(request.body));
     console.log(chalk.red(JSON.stringify(request.body, null, 2)));
     const updatedUser = await prisma.user.update({
@@ -745,7 +724,6 @@ const updateUserBankAccount = async (request, reply) => {
         bankAccountName: bankaccountname,
       },
     });
-
 
     reply.code(200).send({
       status: "success",
@@ -768,10 +746,7 @@ const updateUserBankAccount = async (request, reply) => {
       error: error.message,
     });
   }
-
-}
-
-
+};
 
 const editUserBankAccount = async (request, reply) => {
   try {
@@ -783,19 +758,18 @@ const editUserBankAccount = async (request, reply) => {
 
     const { bankid, bankaccountname, bankaccount, password } = request.body;
 
-
     const user = await prisma.user.findUnique({
       where: { id: userId },
-    })
+    });
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
     if (!isPasswordCorrect) {
-      reply.status(401).send('Invalid Password');
+      reply.status(401).send("Invalid Password");
       // throw new Error('Invalid password');
     }
 
-    const hashedBankAccount = btoa(bankaccount) //เข้ารหัสแบบ btoa
+    const hashedBankAccount = btoa(bankaccount); //เข้ารหัสแบบ btoa
     // console.log(chalk.red(request.body));
     console.log(chalk.red(JSON.stringify(request.body, null, 2)));
     const updatedUser = await prisma.user.update({
@@ -806,7 +780,6 @@ const editUserBankAccount = async (request, reply) => {
         bankAccountName: bankaccountname,
       },
     });
-
 
     reply.code(200).send({
       status: "success",
@@ -829,9 +802,7 @@ const editUserBankAccount = async (request, reply) => {
       error: error.message,
     });
   }
-
-}
-
+};
 
 const updateUser = async (request, reply) => {
   try {
@@ -845,15 +816,14 @@ const updateUser = async (request, reply) => {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-    })
+    });
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
 
     if (!isPasswordCorrect) {
-      reply.status(401).send('Invalid Password');
+      reply.status(401).send("Invalid Password");
       // throw new Error('Invalid password');
     } else {
-
       // console.log(chalk.red(request.body));
       console.log(chalk.red(JSON.stringify(request.body, null, 2)));
       const updatedUser = await prisma.user.update({
@@ -865,14 +835,12 @@ const updateUser = async (request, reply) => {
         },
       });
 
-
       reply.code(200).send({
         status: "success",
         message: "User information updated successfully",
         data: updatedUser,
       });
     }
-
   } catch (error) {
     console.error("Error updating user:", error);
 
@@ -893,18 +861,17 @@ const updateUser = async (request, reply) => {
 
 // เปลี่ยนรหัสผ่านทางลิงค์ที่ส่งไปทางอีเมล
 const forgetPassword = async (fullname, email, keyResetPassword, reply) => {
-
-  let config = ({
+  let config = {
     service: "gmail",
     auth: {
       user: forget.EMAIL,
-      pass: forget.PASSWORD
+      pass: forget.PASSWORD,
     },
     tls: {
       // do not fail on invalid certs
-      rejectUnauthorized: false
+      rejectUnauthorized: false,
     },
-  });
+  };
 
   let MailGenerator = new Mailgen({
     theme: "default",
@@ -917,11 +884,12 @@ const forgetPassword = async (fullname, email, keyResetPassword, reply) => {
   let response = {
     body: {
       name: " " + fullname,
-      intro: "Your MusicAgent password can be reset by clicking the button below. If you did not request a new password, please ignore this email.",
+      intro:
+        "Your MusicAgent password can be reset by clicking the button below. If you did not request a new password, please ignore this email.",
       action: {
         button: {
-          color: '#33b5e5',
-          text: 'Reset Password',
+          color: "#33b5e5",
+          text: "Reset Password",
           link: `${process.env.HOST}/forgetpassword/${keyResetPassword}`,
         },
       },
@@ -938,7 +906,6 @@ const forgetPassword = async (fullname, email, keyResetPassword, reply) => {
     subject: "คำร้องขอรีเซ็ตรหัสผ่านกับ Music Agent!!!",
     html: mail,
   };
-
 
   transporter
     .sendMail(message)
@@ -959,7 +926,9 @@ const uploadFile = async (request, reply) => {
   const canUpload = await canUploadFile(userId);
 
   if (!canUpload) {
-    return reply.status(403).send({ error: 'Upload limit reached or subscription expired' });
+    return reply
+      .status(403)
+      .send({ error: "Upload limit reached or subscription expired" });
   }
 
   // ถ้าสามารถอัปโหลดได้ ให้ดำเนินการ
@@ -985,12 +954,10 @@ const uploadFile = async (request, reply) => {
     },
   });
 
-  reply.status(201).send({ message: 'File uploaded successfully', data: newUpload });
+  reply
+    .status(201)
+    .send({ message: "File uploaded successfully", data: newUpload });
 };
-
-
-
-
 
 module.exports = {
   canUploadFile,
@@ -1010,6 +977,5 @@ module.exports = {
   forgetVerify,
   resetPasswordByEmail,
   updateUserBankAccount,
-  editUserBankAccount
-
+  editUserBankAccount,
 };
