@@ -476,8 +476,6 @@ const loginUser = async (request, reply) => {
   const email = request.body.email;
   const password = request.body.password;
 
-  console.log(email);
-  console.log(password);
 
   // console.error(request);
   try {
@@ -495,11 +493,22 @@ const loginUser = async (request, reply) => {
     if (!isPasswordCorrect) {
       reply.status(401).send('Invalid Password');
       // throw new Error('Invalid password');
+    } else {
+      if (user.login_status === 1) {
+        reply.status(401).send('This user is logged in from a different location');
+      } else {
+        const user = await prisma.user.update({
+          where: { email },
+          data: {
+            login_status: 1
+          }
+        });
+        const token = generateToken(user);
+
+        reply.status(200).send({ token });
+      }
     }
 
-    const token = generateToken(user);
-
-    reply.status(200).send({ token });
   } catch (error) {
     console.error('Error during login:', error.message);
     reply.status(401).send('Invalid credentials');
@@ -637,8 +646,14 @@ const logoutUser = async (request, reply) => {
 
     const token = authorization.replace("Bearer ", "");
     const decodedToken = validateToken(token); // ถอดรหัสและตรวจสอบโทเค็น
-
     const userId = parseInt(decodedToken.userId);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        login_status: 0,
+      }
+    })
 
     // รหัสผู้ใช้จากโทเค็น (วิธีการนี้ขึ้นอยู่กับว่าคุณเก็บข้อมูลโทเค็นอย่างไร)
     console.log("---------------" + userId + "------------------");

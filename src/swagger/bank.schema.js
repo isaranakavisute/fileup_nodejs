@@ -1,7 +1,6 @@
-// bankSchema.js
-const getBanksSchema = {
+exports.getBanksSchema = {
   description: "Retrieve all banks",
-  tags: ["Setting"],
+  tags: ["Bank"],
   summary: "Get all banks",
   response: {
     200: {
@@ -48,9 +47,9 @@ const getBanksSchema = {
   },
 };
 
-const getBankByIdSchema = {
+exports.getBankByIdSchema = {
   description: "Retrieve a bank by ID",
-  tags: ["Setting"],
+  tags: ["Bank"],
   summary: "Get bank by ID",
   params: {
     type: "object",
@@ -98,9 +97,4 @@ const getBankByIdSchema = {
       },
     },
   },
-};
-
-module.exports = {
-  getBanksSchema,
-  getBankByIdSchema,
 };

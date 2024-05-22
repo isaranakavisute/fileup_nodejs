@@ -1,6 +1,4 @@
-// schema.js
-
-const getUserProfileSchema = {
+exports.getUserProfileSchema = {
   tags: ["User"],
   summary: "Get user profile",
   description: "Get user profile",
@@ -106,7 +104,7 @@ const getUserProfileSchema = {
   },
 };
 
-const getUserByIdSchema = {
+exports.getUserByIdSchema = {
   tags: ["User"],
   summary: "Search user by ID",
   description: "Get user by ID",
@@ -201,7 +199,7 @@ const getUserByIdSchema = {
   },
 };
 
-const registerUserSchema = {
+exports.registerUserSchema = {
   tags: ["User"],
   summary: "Register new user",
   description: "Register a new user",
@@ -269,7 +267,7 @@ const registerUserSchema = {
   },
 };
 
-const updateUserProfileSchema = {
+exports.updateUserProfileSchema = {
   tags: ["User"],
   summary: "Update user profile",
   description: "Update user profile",
@@ -361,7 +359,7 @@ const updateUserProfileSchema = {
   },
 };
 
-const changePasswordSchema = {
+exports.changePasswordSchema = {
   tags: ["User"],
   summary: "Change user password",
   description: "Change user password",
@@ -450,7 +448,7 @@ const changePasswordSchema = {
   },
 };
 
-const changePhoneNumberSchema = {
+exports.changePhoneNumberSchema = {
   tags: ["User"],
   summary: "Change user phone number",
   description: "Change user phone number",
@@ -463,12 +461,6 @@ const changePhoneNumberSchema = {
       },
     },
     required: ["Authorization"],
-  },
-  params: {
-    type: "object",
-    properties: {
-      id: { type: "integer", description: "User ID" },
-    },
   },
   body: {
     type: "object",
@@ -548,9 +540,8 @@ const changePhoneNumberSchema = {
   },
 };
 
-// schema.js
 
-const resetPasswordSchema = {
+exports.resetPasswordSchema = {
   tags: ["User"],
   summary: "Reset user password",
   description: "Reset user password",
@@ -643,7 +634,7 @@ const resetPasswordSchema = {
   },
 };
 
-const userSchema = {
+exports.checkEmailSchema = {
   tags: ["User"],
   summary: "Send reset password via email",
   description: "Send reset password via email",
@@ -681,7 +672,7 @@ const userSchema = {
   },
 };
 
-const resetPasswordฺBySendEmsilSchema = {
+exports.resetPasswordฺBySendEmsilSchema = {
   description: "Reset user password by key",
   tags: ["User"],
   summary: "Reset password by key",
@@ -728,7 +719,7 @@ const resetPasswordฺBySendEmsilSchema = {
   },
 };
 
-const addBankAccountSchema = {
+exports.addBankAccountSchema = {
   description: "Add or update user bank account",
   tags: ["User"],
   summary: "Add bank account",
@@ -790,7 +781,7 @@ const addBankAccountSchema = {
   },
 };
 
-const editBankAccountSchema = {
+exports.editBankAccountSchema = {
   description: "Edit user bank account",
   tags: ["User"],
   summary: "Edit bank account",
@@ -852,7 +843,7 @@ const editBankAccountSchema = {
   },
 };
 
-const loginSchema = {
+exports.loginSchema = {
   tags: ["User"],
   summary: "User login",
   description: "User login",
@@ -884,10 +875,15 @@ const loginSchema = {
       type: "string",
       example: "Invalid credentials",
     },
+    401: {
+      description: "This user is logged in from a different location",
+      type: "string",
+      example: "This user is logged in from a different location",
+    },
   },
 };
 
-const logoutSchema = {
+exports.logoutSchema = {
   tags: ["User"],
   summary: "Logout user and revoke access token",
   description: "Logout user and revoke access token",
@@ -932,7 +928,7 @@ const logoutSchema = {
   },
 };
 
-const deleteUserSchema = {
+exports.deleteUserSchema = {
   description: "Delete a user by ID",
   tags: ["User"],
   summary: "Delete user by ID",
@@ -979,7 +975,3 @@ const deleteUserSchema = {
     },
   },
 };
-
-//   module.exports = {
-//     getUserProfileSchema,
-//   };

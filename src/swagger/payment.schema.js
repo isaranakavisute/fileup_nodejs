@@ -1,5 +1,4 @@
-// paymentSchema.js
-const getPaymentsSchema = {
+exports.getPaymentsSchema = {
   tags: ["Payment"],
   summary: "Get list of packages",
   description: "Get list of packages",
@@ -81,7 +80,7 @@ const getPaymentsSchema = {
   },
 };
 
-const getPaymentByIdSchema = {
+exports.getPaymentByIdSchema = {
   tags: ["Payment"],
   summary: "Get package by ID",
   description: "Get package by ID",
@@ -158,7 +157,7 @@ const getPaymentByIdSchema = {
   },
 };
 
-const createQRCodeSchema = {
+exports.createQRCodeSchema = {
   description: "Create QR Code for package payment",
   tags: ["Payment"],
   summary: "Create QR Code for payment",
@@ -208,7 +207,7 @@ const createQRCodeSchema = {
   },
 };
 
-const handleWebhookSchema = {
+exports.handleWebhookSchema = {
   description: "Handle Omise webhook events",
   tags: ["Payment"],
   summary: "Handle Omise webhook",
@@ -245,11 +244,4 @@ const handleWebhookSchema = {
       },
     },
   },
-};
-
-module.exports = {
-  getPaymentsSchema,
-  getPaymentByIdSchema,
-  createQRCodeSchema,
-  handleWebhookSchema,
 };
