@@ -718,6 +718,7 @@ const userRoute = (app) => {
     },
     handler: controllers.user.forgetVerify,
   }); //ลืมรหัสผ่าน
+
   app.post("/users/forgetpassword/:keyResetPassword", {
     // schema: {
     //   description: "Reset user password by key",
@@ -1212,7 +1213,7 @@ const paymentRoute = (app) => {
     },
     preHandler: [hooks.auth.validateToken],
     handler: controllers.payment.getPakageById, // ระบุฟังก์ชันการดึงข้อมูล package โดยใช้ ID
-  }); //ดึงข้อมูล package ตามไอดี 
+  }); //ดึงข้อมูล package ตามไอดี
 
   app.post("/payment/qr-code", {
     preHandler: [hooks.auth.validateToken],
