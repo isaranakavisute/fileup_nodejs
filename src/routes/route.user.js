@@ -8,6 +8,11 @@ const storage = multer.memoryStorage(); // Store files in memory
 const upload = multer({ storage: storage });
 
 const userRoute = (app) => {
+
+    app.get('/', (req, res) => {
+        res.send('API is up')
+      })
+
     app.get("/me", {
         preHandler: [hooks.auth.validateToken],
         schema: userSchema.getUserProfileSchema,
