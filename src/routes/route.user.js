@@ -11,29 +11,14 @@ const fastify_multer_storage = fastify_multer.diskStorage({
       cb(null, 'uploaded_files/')
     },
     filename: function (req, file, cb) {
-      //cb(null, file.fieldname + '-' + Date.now() + '_' + file.originalname + path.extname(file.originalname))
       cb(null, file.originalname )
     }
   })
-//const uploaded_filesxxx = fastify_multer({ dest: 'uploaded_filesxxx/' });
 const uploaded_files = fastify_multer({ storage: fastify_multer_storage });
-//storage: storage
 
 // Multer configuration for file uploads
 const storage = multer.memoryStorage(); // Store files in memory
 const upload = multer({ storage: storage });
-
-//const upload_server = multer({ dest: 'uploaded_files/' })
-
-// const storage1 = multer.diskStorage({
-//     destination: function (req, file, callback) {
-//       callback(null, './uploaded_filesxxx') // folder ที่เราต้องการเก็บไฟล์
-//     },
-//     filename: function (req, file, callback) {
-//       callback(null, file.originalname) //ให้ใช้ชื่อไฟล์ original เป็นชื่อหลังอัพโหลด
-//     },
-//   });
-// const upload1 = multer({ storage: storage1 });
 
 const userRoute = (app) => {
 
@@ -46,47 +31,7 @@ const userRoute = (app) => {
         res.view("src/views/uploadpage.liquid");
       }); //for testing file upload(html)
 
-   app.post('/fileupload', { preHandler: uploaded_files.single('filetoupload') } ,(req, res) => {
-    res.send(req.file);
-   }); 
-
-//    app.post('/fileupload', { preHandler: uploaded_files.single('filetoupload') } ,(req, res) => {
-//     //res.send(req.file);
-//     //res.send(req.query.filetag);
-//     //console.log(req.file);
-//     res.send(req.file);
-//     console.log(req.file.fieldname);
-//    }); 
-
-//    app.post('/fileupload', { preHandler: uploaded_files.single('filetoupload') } ,(req, res) => {
-//     //res.send(req.file);
-//     //res.send(req.query.filetag);
-//     //console.log(req.file);
-//     res.send(req.file);
-//     console.log(req.file.fieldname);
-//    }); 
-
-//     app.post('/fileupload', { preHandler: (request, reply, next) => { uploaded_files.single(request.file.fieldname);next(); } } ,(req, res) => {
-//     //res.send(req.file);
-//     //res.send(req.query.filetag);
-//     //console.log(req.file);
-//     res.send(req.file);
-//     console.log(req.file.fieldname);
-//    }); 
-   
-
-//      const middleware = (_req, _res, next) => {
-//        console.log('middleware start');
-//        //const { params } = _req.params;
-//        //uploaded_files.single(_req);
-//        console.log(_req);
-//        console.log('middleware end');
-//        next();
-//      }
-
-//     app.post('/fileupload', { preHandler: [middleware] } ,(req, res) => {
-//     res.send(req.file);
-//    }); 
+    app.post('/fileupload', { preHandler: uploaded_files.single('filetoupload') } ,(req, res) => { res.send(req.file); }); //for file upload
 
     app.get("/me", {
         preHandler: [hooks.auth.validateToken],
