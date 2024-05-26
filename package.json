@@ -34,7 +34,10 @@
     "omise": "^0.12.0",
     "pg": "^8.11.5",
     "randomstring": "^1.3.0",
-    "formidable": "^3.5.1"
+    "formidable": "^3.5.1",
+    "liquidjs":"^10.13.1",
+    "point-of-view":"^5.0.0",
+    "fastify-multer":"^2.0.3"
   },
   "scripts": {
     "dev": "nodemon index.js SECRET_KEY = musica_gent",
