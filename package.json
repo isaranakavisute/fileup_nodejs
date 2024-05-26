@@ -11,7 +11,7 @@
     "@fastify/static": "5.0.0",
     "@fastify/swagger": "6.0.0",
     "@fastify/swagger-ui": "^3.0.0",
-    "@prisma/client": "^5.8.1",
+    "@prisma/client": "^5.14.0",
     "axios": "^1.6.8",
     "bcrypt": "^5.1.1",
     "browserify": "^17.0.0",
@@ -19,7 +19,7 @@
     "crypto": "^1.0.1",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "faker": "^6.6.6",
+    "faker": "^5.5.3",
     "fastify": "^3.29.5",
     "fastify-cookie": "^5.7.0",
     "fastify-cors": "^6.1.0",
@@ -33,7 +33,8 @@
     "nodemon": "^3.1.0",
     "omise": "^0.12.0",
     "pg": "^8.11.5",
-    "randomstring": "^1.3.0"
+    "randomstring": "^1.3.0",
+    "formidable": "^3.5.1"
   },
   "scripts": {
     "dev": "nodemon index.js SECRET_KEY = musica_gent",
